@@ -82,4 +82,9 @@ devpath/
 
 ## 📝 Diagrams
 - **Use Case Diagram:**
+
 ![Use Case Diagram](docs/DevPath%20Use%20Case%20Diagram.png)
+
+- **Database ERD:**
+
+![Database ERD](docs/DevPath%20Database%20ERD.png)
