@@ -88,3 +88,7 @@ devpath/
 - **Database ERD:**
 
 ![Database ERD](docs/DevPath%20Database%20ERD.png)
+
+- **Class Diagram Prototype (V1):**
+
+![Class Diagram](docs/DevPath%20Class%20Diagram%20Prototype%20v1.png)
