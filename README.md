@@ -82,4 +82,4 @@ devpath/
 
 ## 📝 Diagrams
 - **Use Case Diagram:**
-![Use Case Diagram](docs/DevPath%20Use%20Case%20Diagram.svg)
+![Use Case Diagram](docs/DevPath%20Use%20Case%20Diagram.png)
