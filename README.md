@@ -14,7 +14,7 @@
   -	Internship transparency: Users leave reviews (rating, salary, culture).
 
 - **Peer Review Hub**
-  - pload resumes, essays, or code snippets.
+  - Upload resumes, essays, or code snippets.
   -	Other users can review and give feedback.
   -	Reputation points for reviewers (gamification).
 
@@ -79,3 +79,16 @@ devpath/
     git clone https://github.com/ziadismael/DevPath
     cd DevPath
 ```
+
+## 📝 Diagrams
+- **Use Case Diagram:**
+
+![Use Case Diagram](docs/DevPath%20Use%20Case%20Diagram.png)
+
+- **Database ERD:**
+
+![Database ERD](docs/DevPath%20Database%20ERD.png)
+
+- **Class Diagram Prototype (V1):**
+
+![Class Diagram](docs/DevPath%20Class%20Diagram%20Prototype%20v1.png)
