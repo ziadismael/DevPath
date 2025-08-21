@@ -11,7 +11,7 @@ internshipRouter.get('/:internshipID', internshipController.getInternship);
 internshipRouter.post('/:internshipID/apply', internshipController.apply);
 
 // Reviews
-internshipRouter.post('/:internshipID', internshipController.writeReview);
+internshipRouter.post('/:internshipID/reviews', internshipController.writeReview);
 
 // CRUD for internship listings (admin/employer only)
 internshipRouter.post('/', internshipController.createInternship);
