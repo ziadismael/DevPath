@@ -1,5 +1,12 @@
 # DevPath
 
+DevPath is a full-stack platform designed to empower students and professionals in their career journeys.  
+It combines **career discovery tools, peer collaboration, AI-powered coaching and interviewing, and project showcasing** into one ecosystem.  
+
+Whether you’re looking for scholarships, internships, peer feedback, or practicing interviews, DevPath provides the resources and community to help you **grow, improve, and stand out** in the competitive job market.  
+
+
+
 ## 📌 Features
 
 - **User Management**
