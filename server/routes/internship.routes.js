@@ -8,7 +8,7 @@ internshipRouter.get('/', internshipController.getAllInternships);
 internshipRouter.get('/:internshipID', internshipController.getInternship);
 
 // Applications
-internshipRouter.post('/:internshipID/apply', internshipController.apply);
+internshipRouter.post('/:internshipID/apply', internshipController.applyToInternship);
 
 // Reviews
 internshipRouter.post('/:internshipID/reviews', internshipController.writeReview);
