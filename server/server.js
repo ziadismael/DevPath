@@ -1,6 +1,8 @@
 import express from "express";
 import { PORT } from "./config/env.js";
 import connectToDB from "./database/postgres.js";
+import {sequelize} from "./database/postgres.js";
+import {models} from "./models/index.models.js";
 
 const app = express();
 
@@ -9,7 +11,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, async() => {
-  console.log(`DevPath is running on http://localhost:${PORT}`);
   await connectToDB();
+  console.log(`DevPath is running on http://localhost:${PORT}`);
+  await sequelize.sync({alter: true});
 });
-

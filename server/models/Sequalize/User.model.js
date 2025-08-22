@@ -2,9 +2,10 @@ import {DataTypes} from 'sequelize';
 import {sequelize} from '../../database/postgres.js';
 
 const User = sequelize.define("User", {
-    id: {
-        type: DataTypes.INTEGER,   // could also use BIGINT if you expect huge numbers
-        autoIncrement: true,
+    userID: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
         primaryKey: true,
     },
     firstName: {
