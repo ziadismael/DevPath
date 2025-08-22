@@ -2,12 +2,11 @@ import {DataTypes} from 'sequelize';
 import {sequelize} from '../../database/postgres.js';
 
 const User = sequelize.define("User", {
-    userID: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        allowNull: false,
-        primaryKey: true,
-    },
+   userID:{
+       type:DataTypes.UUID,
+       defaultValue:DataTypes.UUIDV4,
+       primaryKey: true,
+   },
     firstName: {
         type: DataTypes.STRING,
         allowNull: false,

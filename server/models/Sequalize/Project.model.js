@@ -5,7 +5,6 @@ const Project = sequelize.define('Project', {
     projectID:{
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        allowNull: false,
         primaryKey: true
     },
     projectName: {

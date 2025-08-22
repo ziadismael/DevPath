@@ -29,6 +29,7 @@ Comment.belongsTo(Post, {foreignKey: 'postID'});
 export const models = {
     User,
     Project,
+    Team,
     TeamMember,
     Interview,
     Post,

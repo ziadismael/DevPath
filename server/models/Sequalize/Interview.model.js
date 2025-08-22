@@ -5,7 +5,6 @@ const Interview = sequelize.define('Interview', {
     interviewID:{
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        allowNull: false,
         primaryKey: true
     },
     weakPoints:{

@@ -13,5 +13,5 @@ app.get("/", (req, res) => {
 app.listen(PORT, async() => {
   await connectToDB();
   console.log(`DevPath is running on http://localhost:${PORT}`);
-  await sequelize.sync({alter: true});
+  await sequelize.sync({force: true});
 });
