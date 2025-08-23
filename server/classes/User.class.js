@@ -103,6 +103,21 @@ class UserClass {
 
 }
 
+class SWUserClass extends UserClass {
+    constructor(firstName, lastName, email, username, hashedPassword) {
+        super(firstName, lastName, email, username, hashedPassword);
+        this.role = "User"
+    }
+}
+
+
+class AdminClass extends UserClass {
+    constructor(firstName, lastName, email, username, hashedPassword) {
+        super(firstName, lastName, email, username, hashedPassword);
+        this.role = "Admin";
+    }
+    // Create Internships and delete them
+}
 export default UserClass;
 
 
