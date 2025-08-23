@@ -1,4 +1,7 @@
 # DevPath
+![Node.Js](https://img.shields.io/badge/Node.js-v22.17-green)
+![Express.Js](https://img.shields.io/badge/Express-v4.16-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v8.16-blue)
 
 DevPath is a full-stack platform designed to empower students and professionals in their career journeys.  
 It combines **career discovery tools, peer collaboration, AI-powered coaching and interviewing, and project showcasing** into one ecosystem.  
@@ -44,7 +47,7 @@ Whether you’re looking for scholarships, internships, peer feedback, or practi
 ## 🛠️ Tech Stack
 
 - **Backend:** Node.js, Express.js
-- **Database:** PostgreSQL, MongoDB (Mongoose ODM)
+- **Database:** PostgreSQL (Sequelize), MongoDB (Mongoose ODM)
 - **Workflow Automation:** Upstash Workflow
 - **Authentication:** JWT (JSON Web Tokens)
 - **Password Hashing** Bcrypt.js
