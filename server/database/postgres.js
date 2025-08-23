@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 import {DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME} from "../config/env.js";
 
-const sequelize = new Sequelize(
+export const sequelize = new Sequelize(
     DB_NAME,
     DB_USERNAME,
     DB_PASSWORD,
@@ -24,5 +24,6 @@ const connectToDB = async() => {
         console.error('Error connecting to the database: ',e);
     }
 }
+
 
 export default connectToDB;
