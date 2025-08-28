@@ -1,6 +1,4 @@
-import {User} from '../models/Sequalize/User.model.js'
 import {models} from "../models/index.models.js";
-
 
 class UserClass {
     constructor (firstName, lastName, email, username, hashedPassword) {
@@ -8,9 +6,10 @@ class UserClass {
         this._lastName = lastName;
         this._email = email;
         this._username = username;
+        this._password = hashedPassword;
+        this._userID = null;
         // await this.setEmail(email);
         // await this.setUsername(username);
-        this.password = hashedPassword;
         // store hashed password in DB
         // await saveUserDB();
     }
@@ -24,9 +23,6 @@ class UserClass {
             throw new Error("First name must be a string.");
         }
         value = value.trim();
-        if (value.length < 2 || value.length > 50){
-            throw new Error("First name must be between 2 and 50 characters.");
-        }
         if (!/^[A-Za-z]+$/.test(value)){
             throw new Error("First name must only contain letters.");
         }
@@ -42,9 +38,6 @@ class UserClass {
             throw new Error("First name must be a string.");
         }
         value = value.trim();
-        if (value.length < 2 || value.length > 50){
-            throw new Error("Last name must be between 2 and 50 characters.");
-        }
         if (!/^[A-Za-z]+$/.test(value)){
             throw new Error("Last name must only contain letters.");
         }
@@ -87,11 +80,24 @@ class UserClass {
         return this._username;
     }
 
-// Password Setter/ Getter
+    get userID() {
+        return this._userID;
+    }
 
+// Password Setter/ Getter
+    getPassword() {
+        return this._password;
+    }
+
+    setPassword(value) {
+        if (typeof value !== "string"){
+            throw new Error("Password must be a string.");
+        }
+        this._password = value;
+    }
 
     saveUserDB () {
-        const newUser = User.create({
+        const newUser = models.User.create({
             firstName: this.firstName,
             lastName: this.lastName,
             email: this.getEmail(),
@@ -99,26 +105,51 @@ class UserClass {
             password: this.getPassword(),
         })
         console.log("user created successfully.", newUser.toJSON());
+        const currentUser = models.User.findOne({username: this.getUsername()});
+        if (currentUser){
+            this._userID = currentUser.userID;
+        }
     }
 
 }
 
-class SWUserClass extends UserClass {
+export class RegularUserClass extends UserClass {
     constructor(firstName, lastName, email, username, hashedPassword) {
         super(firstName, lastName, email, username, hashedPassword);
         this.role = "User"
     }
+
+    applyToInternship (internshipID) {
+        const internship = models.Internship.findOne(internshipID);
+        const currentUser = models.User.findOne({username: this.getUsername()});
+        if (internship){
+           models.Application.create({
+               status: 'Applied',
+               internshipID: internshipID,
+               userID: currentUser.userID,
+           });
+        }
+    }
 }
 
 
-class AdminClass extends UserClass {
+export class AdminClass extends UserClass {
     constructor(firstName, lastName, email, username, hashedPassword) {
         super(firstName, lastName, email, username, hashedPassword);
         this.role = "Admin";
     }
-    // Create Internships and delete them
+
+
+    banUser(userID) {
+        const bannedUser = models.User.findOne({userID: userID});
+        if (bannedUser){
+            bannedUser.destroy();
+            console.log("User banned with id ", userID);
+        }
+        console.log("No user with the userID: ", userID);
+    }
 }
-export default UserClass;
+
 
 
 
