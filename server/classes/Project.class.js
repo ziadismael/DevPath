@@ -1,6 +1,6 @@
 import {models} from "../models/index.models.js";
 
-class Project {
+class ProjectClass {
     constructor(projectName) {
         this._projectID = null;
         this._projectName = projectName;
@@ -44,4 +44,4 @@ class Project {
 }
 
 
-export default Project;
+export default ProjectClass;
