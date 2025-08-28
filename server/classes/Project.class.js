@@ -5,6 +5,7 @@ class ProjectClass {
         this._projectID = null;
         this._projectName = projectName;
         this._githubRepo = null;
+        this._teamID = null;
     }
 
     async saveToDB(){
@@ -14,6 +15,16 @@ class ProjectClass {
         });
         console.log("Project has been saved to DB: ",newProject);
         this._projectID = newProject.projectName;
+    }
+
+    async saveUpdates() {
+        const currentProject = await models.Project.findByPk(this._projectID);
+
+        currentProject.gitHubRepo = this._githubRepo;
+        currentProject.projectName = this._projectName;
+        currentProject.teamID = this._teamID
+
+        await currentProject.save();
     }
 
     setProjectName(projectName) {
