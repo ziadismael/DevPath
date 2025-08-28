@@ -3,7 +3,7 @@ import {models} from "../models/index.models.js";
 class InterviewClass {
     constructor(userID) {
         this._userID = userID;
-        this._questionsList = [];
+        this.questionsList = [];
         this._status = '';
         this._score = null;
         this._interviewID = null;
@@ -21,7 +21,6 @@ export class TechMockInterview extends InterviewClass {
     async saveToDB(){
         const newInterview = await models.Interview.create({
             userID: this._userID,
-            score: this._score,
             weakPoints: null,
             typeOfInterview: 'Tech',
             transcript: null
@@ -43,7 +42,6 @@ export class HRMockInterview extends InterviewClass {
    async saveToDB(){
         const newInterview = await models.Interview.create({
             userID: this._userID,
-            score: this._score,
             weakPoints: null,
             typeOfInterview: 'HR',
             transcript: null
