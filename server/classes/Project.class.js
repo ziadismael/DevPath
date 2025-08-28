@@ -27,22 +27,24 @@ class ProjectClass {
         await currentProject.save();
     }
 
-    setProjectName(projectName) {
+    async setProjectName(projectName) {
         if (typeof projectName !== "string"){
             throw new Error("Project name must be a string.");
         }
         this.projectName = projectName;
+        await this.saveUpdates();
     }
 
     getProjectName() {
         return this._projectName;
     }
 
-    setGitHubRepo(githubRepo) {
+    async setGitHubRepo(githubRepo) {
         if (typeof githubRepo !== "string"){
             throw new Error("GitHub repo must be a string.");
         }
         this._githubRepo = githubRepo;
+        await this.saveUpdates();
     }
 
     getGitHubRepo() {
@@ -51,6 +53,19 @@ class ProjectClass {
 
     getProjectID(){
         return this._projectID;
+    }
+
+    getTeamID() {
+        return this._teamID;
+    }
+
+    async setTeam(teamID) {
+        const team = await models.Team.findByPk(teamID);
+        if (!team){
+            throw new Error("Cannot find team with the teamID: " + teamID);
+        }
+        this._teamID = teamID;
+        await this.saveUpdates();
     }
 }
 
