@@ -1,0 +1,157 @@
+import {models} from "../models/index.models.js";
+
+class UserClass {
+    constructor (firstName, lastName, email, username, hashedPassword) {
+        this._firstName = firstName;
+        this._lastName = lastName;
+        this._email = email;
+        this._username = username;
+        this._password = hashedPassword;
+        this._userID = null;
+        // await this.setEmail(email);
+        // await this.setUsername(username);
+        // store hashed password in DB
+        // await saveUserDB();
+    }
+
+    get firstName() {
+        return this._firstName;
+    }
+
+    set firstName(value) {
+        if (typeof value !== "string"){
+            throw new Error("First name must be a string.");
+        }
+        value = value.trim();
+        if (!/^[A-Za-z]+$/.test(value)){
+            throw new Error("First name must only contain letters.");
+        }
+        this._firstName = value;
+    }
+
+    get lastName() {
+        return this._lastName;
+    }
+
+    set lastName(value) {
+        if (typeof value !== "string"){
+            throw new Error("First name must be a string.");
+        }
+        value = value.trim();
+        if (!/^[A-Za-z]+$/.test(value)){
+            throw new Error("Last name must only contain letters.");
+        }
+        this._lastName = value;
+    }
+
+    async setEmail (value) {
+        if (typeof value !== "string"){
+            throw new Error("Email must be a string.");
+        }
+        value = value.trim().toLowerCase();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)){
+            throw new Error("Email must be a valid email format.");
+        }
+        const existingUser = await models.User.findOne({ email: value });
+        if (existingUser){
+            throw new Error("Email already exists");
+        }
+        this._email = value;
+    }
+
+    getEmail () {
+        return this._email;
+    }
+
+    async setUsername(value) {
+        if (typeof value !== "string"){
+            throw new Error("username must be a string.");
+        }
+        value = value.trim();
+        const existingUser = await models.User.findOne({ username: value });
+        if (existingUser){
+            throw new Error("username already exists");
+        }
+        this._username = value;
+    }
+
+    getUsername() {
+        return this._username;
+    }
+
+    get userID() {
+        return this._userID;
+    }
+
+// Password Setter/ Getter
+    getPassword() {
+        return this._password;
+    }
+
+    setPassword(value) {
+        if (typeof value !== "string"){
+            throw new Error("Password must be a string.");
+        }
+        this._password = value;
+    }
+
+    saveUserDB () {
+        const newUser = models.User.create({
+            firstName: this.firstName,
+            lastName: this.lastName,
+            email: this.getEmail(),
+            username: this.getUsername(),
+            password: this.getPassword(),
+        })
+        console.log("user created successfully.", newUser.toJSON());
+        const currentUser = models.User.findOne({username: this.getUsername()});
+        if (currentUser){
+            this._userID = currentUser.userID;
+        }
+    }
+
+}
+
+export class RegularUserClass extends UserClass {
+    constructor(firstName, lastName, email, username, hashedPassword) {
+        super(firstName, lastName, email, username, hashedPassword);
+        this.role = "User"
+    }
+
+    applyToInternship (internshipID) {
+        const internship = models.Internship.findOne(internshipID);
+        const currentUser = models.User.findOne({username: this.getUsername()});
+        if (internship){
+           models.Application.create({
+               status: 'Applied',
+               internshipID: internshipID,
+               userID: currentUser.userID,
+           });
+        }
+    }
+}
+
+
+export class AdminClass extends UserClass {
+    constructor(firstName, lastName, email, username, hashedPassword) {
+        super(firstName, lastName, email, username, hashedPassword);
+        this.role = "Admin";
+    }
+
+
+    banUser(userID) {
+        const bannedUser = models.User.findOne({userID: userID});
+        if (bannedUser){
+            bannedUser.destroy();
+            console.log("User banned with id ", userID);
+        }
+        console.log("No user with the userID: ", userID);
+    }
+}
+
+
+
+
+
+
