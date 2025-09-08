@@ -1,4 +1,5 @@
 import {models} from "../models/index.models.js";
+import ProjectClass from "../classes/Project.class.js"
 
 export class UserClass {
     constructor (firstName, lastName, email, username, hashedPassword) {
@@ -8,6 +9,7 @@ export class UserClass {
         this._username = username;
         this._password = hashedPassword;
         this._userID = null;
+        this._posts = []
         // await this.setEmail(email);
         // await this.setUsername(username);
         // store hashed password in DB
@@ -39,6 +41,14 @@ export class UserClass {
         const user = new RegularUserClass(firstName, lastName, email, username, password);
         user._userID = userRecord.userID;
         return user;
+    }
+
+    async writePost(){
+        // implementation
+    }
+
+    get posts() {
+        return this._posts;
     }
 
     get firstName() {
@@ -80,7 +90,7 @@ export class UserClass {
         if (!emailRegex.test(value)){
             throw new Error("Email must be a valid email format.");
         }
-        const existingUser = await models.User.findOne({ email: value });
+        const existingUser = await models.User.findOne({ where: { email: value } });
         if (existingUser){
             throw new Error("Email already exists");
         }
@@ -96,7 +106,7 @@ export class UserClass {
             throw new Error("username must be a string.");
         }
         value = value.trim();
-        const existingUser = await models.User.findOne({ username: value });
+        const existingUser = await models.User.findOne({ where: { username: value } });
         if (existingUser){
             throw new Error("username already exists");
         }
@@ -154,16 +164,84 @@ export class RegularUserClass extends UserClass {
     constructor(firstName, lastName, email, username, hashedPassword) {
         super(firstName, lastName, email, username, hashedPassword);
         this.role = "User"
+        this._projects = []
+    }
+
+    async getProjects () {
+        const projects = await models.Project.findAll({
+            include: {
+                model: models.Team,
+                include: {
+                    model: models.User,
+                    where: { id: this._userID } // only teams that include this user
+                }
+            }
+        });
+        projects.forEach(project => {
+            this._projects.push(project);
+        })
+        return this._projects;
+    }
+
+    async addProject(name, repoLink, teamID) {
+        if (!teamID) {
+            let team = await models.Team.findOne({
+                where: { isPersonal: true },
+                include: {
+                    model: models.User,
+                    where: { id: this._userID }
+                }
+            });
+
+            if (!team) {
+                team = await models.Team.create({
+                    name: `${this._username}'s Personal Projects`,
+                    isPersonal: true
+                });
+                await models.TeamMember.create({
+                    teamID: team.id,
+                    userID: this._userID
+                });
+            }
+            teamID = team.teamID;
+        }
+        const project = new ProjectClass(name);
+        await project.setTeam(teamID);
+        if (repoLink) {
+            await project.setGitHubRepo(repoLink);
+        }
+        await project.saveToDB();
+    }
+
+    async deleteProject(projectID) {
+        const currentProject = await ProjectClass.findById(projectID);
+        if (!currentProject) {
+            throw new Error(`Project with the id ${projectID} not found`);
+        }
+
+        const currentTeam = await models.Team.findByPk(currentProject.teamID, {
+            include: {
+                model: models.User,
+                where: { userID: this._userID }
+            }
+        });
+
+        if (!currentTeam) {
+            throw new Error("You are not authorized to delete this project");
+        }
+
+        await currentProject.deleteProject();
+
     }
 
     applyToInternship (internshipID) {
         const internship = models.Internship.findOne(internshipID);
         if (internship){
-           models.Application.create({
-               status: 'Applied',
-               internshipID,
-               userID: this._userID,
-           });
+            models.Application.create({
+                status: 'Applied',
+                internshipID,
+                userID: this._userID,
+            });
         }
     }
 }
@@ -176,11 +254,11 @@ export class AdminClass extends UserClass {
     }
 
 
-    banUser(userID) {
-        const bannedUser = models.User.findOne({userID: userID});
+    async banUser(userID) {
+        const bannedUser = await models.User.findByPk(userID);
         if (bannedUser){
-            bannedUser.destroy();
-            console.log("User banned with id ", userID);
+            await bannedUser.destroy();
+            console.log(`User ${userID} banned,`);
         }
         console.log("No user with the userID: ", userID);
     }

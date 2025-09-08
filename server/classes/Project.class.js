@@ -8,23 +8,54 @@ class ProjectClass {
         this._teamID = null;
     }
 
+    static async findById(projectID) {
+        const projectRecord = await models.Project.findByPk(projectID);
+        return projectRecord ? ProjectClass._createInstance(projectRecord) : null;
+    }
+
+    static _createInstance(projectRecord) {
+        const project = new ProjectClass(projectRecord.projectName);
+        project._projectID = projectRecord.projectID;
+        project._githubRepo = projectRecord.gitHubRepo;
+        project._teamID = projectRecord.teamID;
+        return project;
+    }
+
+
     async saveToDB(){
         const newProject = await models.Project.create({
             projectName: this.projectName,
             gitHubRepo: this._githubRepo,
         });
         console.log("Project has been saved to DB: ",newProject);
-        this._projectID = newProject.projectName;
+        this._projectID = newProject.projectID;
     }
 
     async saveUpdates() {
         const currentProject = await models.Project.findByPk(this._projectID);
+
+        if (!currentProject) {
+            throw new Error(`Project with ID ${this._projectID} not found`);
+        }
 
         currentProject.gitHubRepo = this._githubRepo;
         currentProject.projectName = this._projectName;
         currentProject.teamID = this._teamID
 
         await currentProject.save();
+    }
+
+    async deleteProject() {
+        if (!this._projectID) {
+            throw new Error(`Cannot delete: project ${this._projectID} not persisted in DB`);
+        }
+
+        await models.Project.destroy({
+            where: { projectID: this._projectID }
+        });
+
+        // Optional: clear local state
+        this._projectID = null;
     }
 
     async setProjectName(projectName) {

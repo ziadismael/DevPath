@@ -11,6 +11,10 @@ const Team = sequelize.define('Team', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    isPersonal: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false // normal teams are collaborative unless specified
+    }
     },
     {
         timestamps: false,
