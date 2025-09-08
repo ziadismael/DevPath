@@ -1,6 +1,6 @@
 import {models} from "../models/index.models.js";
 
-class UserClass {
+export class UserClass {
     constructor (firstName, lastName, email, username, hashedPassword) {
         this._firstName = firstName;
         this._lastName = lastName;
@@ -12,6 +12,33 @@ class UserClass {
         // await this.setUsername(username);
         // store hashed password in DB
         // await saveUserDB();
+    }
+
+    // Rehydrate by ID
+    static async findById(userID) {
+        const userRecord = await models.User.findByPk(userID);
+        return userRecord ? UserClass._createInstance(userRecord) : null;
+    }
+
+    // Rehydrate by username
+    static async findByUsername(username) {
+        const userRecord = await models.User.findOne({ where: { username } });
+        return userRecord ? UserClass._createInstance(userRecord) : null;
+    }
+
+    // Factory
+    static _createInstance(userRecord) {
+        const { firstName, lastName, email, username, password, role } = userRecord;
+
+        if (role === "Admin") {
+            const user = new AdminClass(firstName, lastName, email, username, password);
+            user._userID = userRecord.userID;
+            return user;
+        }
+
+        const user = new RegularUserClass(firstName, lastName, email, username, password);
+        user._userID = userRecord.userID;
+        return user;
     }
 
     get firstName() {
@@ -96,21 +123,31 @@ class UserClass {
         this._password = value;
     }
 
-    saveUserDB () {
-        const newUser = models.User.create({
-            firstName: this.firstName,
-            lastName: this.lastName,
-            email: this.getEmail(),
-            username: this.getUsername(),
-            password: this.getPassword(),
-        })
-        console.log("user created successfully.", newUser.toJSON());
-        const currentUser = models.User.findOne({username: this.getUsername()});
-        if (currentUser){
-            this._userID = currentUser.userID;
+    async saveUserDB () {
+        try {
+            const newUser = await models.User.create({
+                firstName: this.firstName,
+                lastName: this.lastName,
+                email: this.getEmail(),
+                username: this.getUsername(),
+                password: this.getPassword(),
+            })
+            console.log("user created successfully.", newUser.toJSON());
+            this._userID = newUser.userID;
+        }
+        catch (error) {
+            console.error("Error saving the user to the DB:", error);
+            throw error;
         }
     }
 
+    async getUser(username){
+        const currentUser = await models.User.findOne({username: username});
+        if(!currentUser){
+            throw new Error("User not found");
+        }
+        return currentUser;
+    }
 }
 
 export class RegularUserClass extends UserClass {
@@ -121,12 +158,11 @@ export class RegularUserClass extends UserClass {
 
     applyToInternship (internshipID) {
         const internship = models.Internship.findOne(internshipID);
-        const currentUser = models.User.findOne({username: this.getUsername()});
         if (internship){
            models.Application.create({
                status: 'Applied',
-               internshipID: internshipID,
-               userID: currentUser.userID,
+               internshipID,
+               userID: this._userID,
            });
         }
     }

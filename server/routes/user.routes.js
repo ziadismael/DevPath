@@ -7,10 +7,10 @@ const userRouter = Router();
 //______________________________________
 
 // view my page
-userRouter.get('/me',userController.viewMyProfile);
+userRouter.get('/:username',userController.viewMyProfile);
 
 // update my page
-userRouter.put('/me',userController.updateProfile);
+userRouter.put('/:username',userController.updateProfile);
 
 // view other user
 userRouter.get('/:userID', userController.viewProfile);
