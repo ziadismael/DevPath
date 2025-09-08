@@ -1,14 +1,25 @@
 import {models} from "../models/index.models.js";
 import * as console from "node:console";
 
-class Post {
-    constructor(title, body, mediaURL, authorID){
+class PostClass {
+    constructor(title, body, authorID){
         this._postID = null;
         this._userID = authorID;
         this._title = title;
         this._body = body;
         this._mediaURL = [];
-        this._mediaURL.push(mediaURL);
+    }
+
+    static async findById(postID) {
+        const postRecord = await models.Project.findByPk(postID);
+        return postRecord ? PostClass._createInstance(postRecord) : null;
+    }
+
+    static _createInstance(postRecord) {
+        const post = new PostClass(postRecord.title, postRecord.bodyText, postRecord.authorID);
+        post._mediaURL = postRecord.mediaURL;
+        post._title = postRecord.postID;
+        return post;
     }
 
     async saveToDB(){
@@ -34,6 +45,20 @@ class Post {
 
         await currentPost.save();
     }
+
+    async deletePost() {
+        if (!this._postID) {
+            throw new Error(`Cannot delete: post ${this._postID} not persisted in DB`);
+        }
+
+        await models.Post.destroy({
+            where: { postID: this._postID }
+        });
+
+        // Optional: clear local state
+        this._postID = null;
+    }
+
 
     get title() {
         return this._title;
@@ -70,4 +95,4 @@ class Post {
     }
 }
 
-export default Post;
+export default PostClass;

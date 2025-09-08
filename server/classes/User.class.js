@@ -1,5 +1,6 @@
 import {models} from "../models/index.models.js";
 import ProjectClass from "../classes/Project.class.js"
+import PostClass from "./Post.class.js";
 
 export class UserClass {
     constructor (firstName, lastName, email, username, hashedPassword) {
@@ -10,10 +11,7 @@ export class UserClass {
         this._password = hashedPassword;
         this._userID = null;
         this._posts = []
-        // await this.setEmail(email);
-        // await this.setUsername(username);
-        // store hashed password in DB
-        // await saveUserDB();
+        this._role = null;
     }
 
     // Rehydrate by ID
@@ -43,11 +41,32 @@ export class UserClass {
         return user;
     }
 
-    async writePost(){
-        // implementation
+    async writePost(title, body, mediaURL) {
+        const currentPost = new PostClass(title, body ,this._userID);
+        if (mediaURL) {
+            currentPost.mediaURL = mediaURL;
+        }
+        await currentPost.saveToDB();
     }
 
-    get posts() {
+    async deletePost(postID) {
+        const currentPost = await PostClass.findById(postID);
+        if (!currentPost) {
+            throw new Error(`Post with the id ${postID} not found`);
+        }
+
+        if (currentPost.authorID !== this._userID && this._role !== "Admin") {
+            throw new Error("You are not authorized to delete this post");
+        }
+
+        await currentPost.deleteProject();
+    }
+
+    async getPosts() {
+        const posts = await models.Post.findAll({where: {authorID: this._userID}});
+        posts.forEach(post => {
+            this._posts.push(post);
+        })
         return this._posts;
     }
 
