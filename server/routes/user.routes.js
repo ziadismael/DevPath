@@ -1,25 +1,24 @@
 import {Router} from 'express';
-import userController from '../controllers/user.controller.js';
+import {viewProfile, updateProfile} from '../controllers/user.controller.js';
+import authorize from "../middlewares/auth.middleware.js";
 
 const userRouter = Router();
 
-// We need to still add the middlewares
-//______________________________________
 
 // view my page
-userRouter.get('/:username',userController.viewMyProfile);
+userRouter.get('/:username',authorize, viewProfile);
 
 // update my page
-userRouter.put('/:username',userController.updateProfile);
+userRouter.put('/:username',authorize, updateProfile);
 
 // view other user
-userRouter.get('/:userID', userController.viewProfile);
+userRouter.get('/:userID', authorize, viewProfile);
 
 // follow/unfollow
-userRouter.post('/:userID/follow', userController.followUser);
-userRouter.delete('/:userID/unfollow', userController.unfollowUser);
+userRouter.post('/:userID/follow', authorize, followUser);
+userRouter.delete('/:userID/unfollow', authorize, unfollowUser);
 
 // get all users (admin)
-userRouter.get('/', userController.getAllUsers);
+userRouter.get('/', authorize, getAllUsers);
 
 export default userRouter;
