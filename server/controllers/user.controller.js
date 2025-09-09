@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import {models} from '../models/index.models.js';
 
 export const viewProfile = async (req, res, next) => {
     try {
@@ -46,6 +47,40 @@ export const updateProfile = async (req, res, next) => {
             userID: currentUser.userID,
             role: currentUser.role,
         })
+    }
+    catch (error) {
+        next(error);
+    }
+}
+
+export const getAllUsers = async (req, res, next) => {
+    try {
+        const usersList = await models.User.findAll();
+
+        res.status(200).json({
+            usersList,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+}
+
+
+export const followUser = async (req, res, next) => {
+    try{
+        const currentUser = req.user;
+        await currentUser.follow(req.params.username);
+    }
+    catch (error) {
+        next(error);
+    }
+}
+
+export const unfollowUser = async (req, res, next) => {
+    try{
+        const currentUser = req.user;
+        await currentUser.unfollow(req.params.username);
     }
     catch (error) {
         next(error);

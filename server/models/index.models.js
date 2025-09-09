@@ -8,6 +8,7 @@ import Comment from "./Sequalize/Comment.model.js";
 import Internship from "./Sequalize/Internship.model.js";
 import Application from "./Sequalize/Application.model.js";
 import Question from "./Sequalize/Question.model.js";
+import Follows from "./Sequalize/Follows.model.js";
 
 // Associations and Relationships
 User.belongsToMany(Team, {through: TeamMember});
@@ -31,7 +32,18 @@ Comment.belongsTo(Post, {foreignKey: 'postID'});
 User.belongsToMany(Internship, {through: Application});
 Internship.belongsToMany(User, {through: Application});
 
-
+User.belongsToMany(User, {
+    as: "Following",
+    through: Follows,
+    foreignKey: 'followerID',
+    otherKey: 'followingID',
+});
+User.belongsTo(User, {
+    as: "Followers",
+    through: Follows,
+    foreignKey:'followingID',
+    otherKey:  'followerID',
+});
 
 export const models = {
     User,
@@ -44,4 +56,5 @@ export const models = {
     Internship,
     Application,
     Question,
+    Follows,
 }

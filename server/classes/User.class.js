@@ -1,6 +1,7 @@
 import {models} from "../models/index.models.js";
 import ProjectClass from "../classes/Project.class.js"
 import PostClass from "./Post.class.js";
+import User from "../models/Sequalize/User.model.js";
 
 export class UserClass {
     constructor (firstName, lastName, email, username, hashedPassword) {
@@ -182,8 +183,30 @@ export class UserClass {
 export class RegularUserClass extends UserClass {
     constructor(firstName, lastName, email, username, hashedPassword) {
         super(firstName, lastName, email, username, hashedPassword);
-        this.role = "User"
-        this._projects = []
+        this.role = "User";
+        this._projects = [];
+        this._following = [];
+        this._followers = [];
+    }
+
+    async follow(username){
+        const userToFollow = await UserClass.findByUsername(username);
+        const currentUser = await UserClass.findByUsername(this._username);
+        const isFollowing = await userToFollow.hasFollowing(currentUser)
+        if(isFollowing){
+           console.log(`You already are following user ${userToFollow.username}.`);
+        }
+        currentUser.addFollowing(userToFollow);
+    }
+
+    async unfollow(username){
+        const userToFollow = await UserClass.findByUsername(username);
+        const currentUser = await UserClass.findByUsername(this._username);
+        const isFollowing = await userToFollow.hasFollowing(currentUser)
+        if(!isFollowing){
+            console.log(`You are not following user ${userToFollow.username}.`);
+        }
+        currentUser.removeFollowing(userToFollow);
     }
 
     async getProjects () {
