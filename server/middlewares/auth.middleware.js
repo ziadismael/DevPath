@@ -23,4 +23,17 @@ export async function authorize(req, res, next) {
     }
 }
 
+export async function authorizeAdmin(req, res, next) {
+    try {
+        if (req.user.role !== "admin") {
+            throw new Error("You are not authorized to perform this action");
+        }
+        next();
+    }
+    catch (error) {
+        console.error("Auth error:", error);
+        res.status(401).json({ error: "Unauthorized" });
+    }
+}
+
 export default authorize;
