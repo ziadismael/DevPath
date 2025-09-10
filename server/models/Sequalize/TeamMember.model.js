@@ -21,7 +21,7 @@ const TeamMember = sequelize.define('TeamMember', {
                 model: User,
                 key: 'userID'
             }
-        }
+        },
     },
     {
         timestamps: false,
