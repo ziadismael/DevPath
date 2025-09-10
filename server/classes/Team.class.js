@@ -1,5 +1,5 @@
-import {models} from "../models/index.models.js";
-import UserClass from "../models/user.class.js";
+import { models } from "../models/index.models.js";
+import { UserClass } from "./user.class.js";
 
 class TeamClass {
     constructor(teamData) {
@@ -7,16 +7,16 @@ class TeamClass {
         this._teamName = teamData.teamName;
         this._isPersonal = teamData.isPersonal;
         // Eager-loaded relations can be passed in constructor
-        this._members = teamData.Users ? teamData.Users.map(u => new UserClass(u.toJSON())) : [];
+        this._members = teamData.Users ? teamData.Users.map(user => new UserClass(user.toJSON())) : [];
     }
 
-    static async create(teamData, user) {
+    static async create(teamData, user, userRecord) {
         const newTeamRecord = await models.Team.create({
             teamName: teamData.teamName,
         });
 
         // Add the creator as the first member with the 'Owner' role
-        await newTeamRecord.addUser(user, { through: { role: 'Owner' } });
+        await newTeamRecord.addUser(userRecord, { through: { role: 'Owner' } });
 
         return new TeamClass(newTeamRecord.toJSON());
     }
@@ -37,7 +37,7 @@ class TeamClass {
         const teamRecord = await models.Team.findByPk(teamID, {
             include: { model: models.User, attributes: ['userID', 'username', 'email'] }
         });
-        return teamRecord ? new TeamClass(teamRecord.toJSON()) : null;
+        return teamRecord ? new TeamClass(teamRecord) : null;
     }
 
      // Finds all teams that a specific user is a member of.
@@ -50,33 +50,35 @@ class TeamClass {
     }
 
 
-    async addMember(user, role = 'Contributor') {
+    async addMember(user, userRecord, role = 'Contributor') {
         const team = await models.Team.findByPk(this._teamID);
 
         if (!user || !team) {
             throw new Error("Cannot add user: userID / teamID is invalid.");
         }
-        await team.addUser(user, { through: { role } });
+        await team.addUser(userRecord, { through: { role } });
     }
 
-    async removeMember(user) {
+    async removeMember(user, userRecord) {
         const teamRecord = await models.Team.findByPk(this._teamID);
         if (!user || !teamRecord) {
             throw new Error("Cannot add user: userID / teamID is invalid.");
         }
-        await teamRecord.removeUser(user);
+        await teamRecord.removeUser(userRecord);
     };
 
 
     async isOwner(user) {
-        const member = await models.TeamMember.findOne({
+        // This is a more direct and reliable way to check for ownership.
+        const memberRecord = await models.TeamMember.findOne({
             where: {
                 teamID: this._teamID,
                 userID: user.userID,
                 role: 'Owner'
             }
         });
-        return !!member;
+        // Return true if a record was found, false otherwise.
+        return !!memberRecord;
     }
 
     async assignProject(projectInstance){
@@ -98,6 +100,22 @@ class TeamClass {
 
     getTeamID() {
         return this._teamID;
+    }
+
+    async reloadMembers() {
+        const teamRecord = await models.Team.findByPk(this._teamID, {
+            include: { model: models.User, attributes: ['userID', 'username', 'email'] }
+        });
+        if (teamRecord && teamRecord.Users) {
+            this._members = teamRecord.Users.map(u => new UserClass(u.toJSON()));
+        } else {
+            this._members = [];
+        }
+    }
+
+    async getMembers() {
+        await this.reloadMembers();
+        return this._members;
     }
 }
 

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import {JWT_SECRET} from "../config/env.js";
 import { UserClass } from "../classes/User.class.js";
+import {models} from "../models/index.models.js";
 
 export async function authorize(req, res, next) {
     try {
@@ -9,13 +10,13 @@ export async function authorize(req, res, next) {
 
         const decoded = jwt.verify(token, JWT_SECRET);
         console.log("✅ Decoded Token:", decoded);
-
+        const userRecord = await models.User.findByPk(decoded.userID);
         const user = await UserClass.findById(decoded.userID); // returns correct Admin/Regular class
         if (!user) {
             return res.status(401).json({message : "Not Authorized"});
         }
         req.user = user; // now controller has the class instance
-
+        req.userRecord = userRecord;
         next();
     } catch (err) {
         console.error("Auth error:", err);

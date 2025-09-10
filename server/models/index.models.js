@@ -11,8 +11,9 @@ import Question from "./Sequalize/Question.model.js";
 import Follows from "./Sequalize/Follows.model.js";
 
 // Associations and Relationships
-User.belongsToMany(Team, {through: TeamMember});
-Team.belongsToMany(User, {through: TeamMember});
+// Explicitly define the foreign keys for the Team/User relationship to prevent UserUserID/TeamTeamID.
+User.belongsToMany(Team, { through: TeamMember, foreignKey: 'userID' });
+Team.belongsToMany(User, { through: TeamMember, foreignKey: 'teamID' });
 
 Team.hasMany(Project, {foreignKey: 'teamID'});
 Project.belongsTo(Team, {foreignKey: 'teamID'});
