@@ -15,10 +15,19 @@ const User = sequelize.define("User", {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    fullName: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            return `${this.firstName} ${this.lastName}`;
+        },
+    },
     email: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
+        validate: {
+            isEmail: true, // Ensures the value is a valid email format
+        }
     },
     university: {
         type: DataTypes.STRING,
