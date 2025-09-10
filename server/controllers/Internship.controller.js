@@ -1,5 +1,4 @@
-// controllers/internship.controller.js
-import { scrapeJobs } from "../utils/jobScraper.service.js";
+import {importLinkedinJobs} from "../utils/internshipSync.service.js";
 import  InternshipClass from "../classes/Internship.class.js";
 import {models} from "../models/index.models.js";
 
@@ -25,14 +24,6 @@ export const syncJobs = async (req, res, next) => {
 }
 
 
-export async function importLinkedinJobs({ keyword, location, limit, filters }) {
-    // 1. scrape jobs from LinkedIn
-    const scrapedJobs = await scrapeJobs({ keyword, location, limit, filters });
-
-    // 2. save them into DB using your class
-    return await InternshipClass.bulkCreateFromScrapedJobs(scrapedJobs);
-}
-
 export const getInternship = async (req, res, next) => {
     try {
         const internship = await InternshipClass.findById(req.params.id);
@@ -52,8 +43,12 @@ export const getInternship = async (req, res, next) => {
 
 export const getAllInternships = async (req, res, next) => {
     try {
-        const internships = await models.Internship.findAll({});
-        res.status(200).json({internships});
+        const internships = await InternshipClass.findAll();
+        res.status(200).json({
+            success: true,
+            count: internships.length,
+            data: internships
+        });
     }
     catch (error) {
         next(error);
@@ -61,30 +56,18 @@ export const getAllInternships = async (req, res, next) => {
 }
 
 export const createInternship = async (req, res, next) => {
-    try{
-        const { title, company, description, location, mediaURL, applyLink } = req.body;
-        const internshipRecord = await models.Internship.create({
-            title,
-            company,
-            description,
-            location,
-            mediaURL,
-            applyLink,
-        });
-
-        if(!internshipRecord){
-            throw new Error("Error creating Internship");
-        }
-        const internship = new InternshipClass(internshipRecord);
-        res.status(200).json({
+    try {
+        const internship = await InternshipClass.create(req.body);
+        res.status(201).json({
+            success: true,
+            message: 'Internship created successfully',
             data: internship,
-        })
+        });
     }
     catch (error) {
         next(error);
     }
 }
-
 export const updateInternship = async (req, res, next) => {
     try{
         const internshipToUpdate = await InternshipClass.findById(req.params.id);
@@ -118,7 +101,7 @@ export const deleteInternship = async (req, res, next) => {
         if(!internshipToDelete){
             throw new Error(`Internship ${req.params.id} not found`);
         }
-        await internshipToDelete.destroy();
+        await models.Internship.destroy({ where: { internshipID: internshipToDelete.internshipID } });
         res.status(200).json({
             success: true,
             message: "Internship deleted successfully",
@@ -137,7 +120,7 @@ export const applyToInternship = async (req, res, next) => {
            throw new Error(`Internship ${req.params.id} not found`);
        }
         await currentUser.applyToInternship(req.params.id);
-        res.redirect(currentInternship.applyLink)
+        res.status(200).json({ applyLink: currentInternship.applyLink });
     } catch (error) {
         next(error);
     }

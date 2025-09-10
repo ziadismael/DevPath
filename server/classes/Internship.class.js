@@ -4,12 +4,22 @@ import {Error} from "sequelize";
 
 class InternshipClass {
     constructor(data) {
+        this.internshipID = data.internshipID
         this.title = data.title;
         this.company = data.company;
         this.location = data.location;
         this.workplaceType = data.workplaceType;
         this.mediaURL = data.mediaURL;
         this.applyLink = data.applyLink;
+    }
+
+    static async create(internshipBodyData) {
+        const internshipRecord = await models.Internship.create(internshipBodyData);
+        if (!internshipRecord) {
+            throw new Error("Error creating Internship");
+        }
+        // 2. Return a new instance of our class, using the data from the record we just created
+        return new InternshipClass(internshipRecord.toJSON());
     }
 
     static async createFromScrapedJob(job) {
@@ -67,6 +77,13 @@ class InternshipClass {
         const internship = await models.Internship.findByPk(id);
         return internship ? new InternshipClass(internship.toJSON()) : null;
     }
+
+    static async findAll(options = {}) {
+        const internshipRecords = await models.Internship.findAll(options);
+        // Map over the raw records, convert to plain objects, and wrap each in our class
+        return internshipRecords.map(record => new InternshipClass(record.toJSON()));
+    }
+
     //
     // get title() {
     //     return this._title;

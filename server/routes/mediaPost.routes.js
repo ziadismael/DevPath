@@ -1,17 +1,17 @@
 import {Router} from 'express';
-import mediaPostController from '../controllers/mediaPost.controller.js';
+import {} from '../controllers/mediaPost.controller.js';
 
 const postRouter = Router();
 
 // View Posts
-postRouter.get('/:postID', mediaPostController.readPost);
-postRouter.get('/feed', mediaPostController.getFriendsPosts);
+postRouter.get('/:postID', readPost);
+postRouter.get('/feed', getFriendsPosts);
 
 // Admin get all posts -> middleware
-postRouter.get('/', mediaPostController.getAllPosts);
+postRouter.get('/', getAllPosts);
 
 // CRUD for posts
-postRouter.post('/', mediaPostController.writePost);
-postRouter.put('/:postID', mediaPostController.editPost);
-postRouter.delete('/:postID', mediaPostController.deletePost);
-postRouter.post('/:postID', mediaPostController.writeComment);
+postRouter.post('/', writePost);
+postRouter.put('/:postID', editPost);
+postRouter.delete('/:postID', deletePost);
+postRouter.post('/:postID', writeComment);

@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import {syncJobs, getInternship, getAllInternships, createInternship, updateInternship, deleteInternship} from '../controllers/internship.controller.js';
+import {syncJobs, getInternship, getAllInternships, applyToInternship, createInternship, updateInternship, deleteInternship} from '../controllers/internship.controller.js';
 import { authorize, authorizeAdmin} from "../middlewares/auth.middleware.js";
 
 const internshipRouter = Router();
@@ -9,7 +9,7 @@ internshipRouter.get('/', getAllInternships);
 internshipRouter.get('/:internshipID', getInternship);
 
 // Applications
-// internshipRouter.post('/:internshipID/apply', applyToInternship);
+internshipRouter.post('/:internshipID/apply', applyToInternship);
 
 // Reviews
 // internshipRouter.post('/:internshipID/reviews', writeReview);
