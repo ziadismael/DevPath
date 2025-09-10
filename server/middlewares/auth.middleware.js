@@ -25,8 +25,10 @@ export async function authorize(req, res, next) {
 
 export async function authorizeAdmin(req, res, next) {
     try {
-        if (req.user.role !== "admin") {
-            throw new Error("You are not authorized to perform this action");
+        if (req.user.role !== "Admin") {
+            const error = new Error("Forbidden: Admin access required");
+            error.status = 403;
+            throw error;
         }
         next();
     }

@@ -1,18 +1,17 @@
 import {models} from "../models/index.models.js";
 import ProjectClass from "../classes/Project.class.js"
 import PostClass from "./Post.class.js";
-import User from "../models/Sequalize/User.model.js";
 
 export class UserClass {
-    constructor (firstName, lastName, email, username, hashedPassword) {
-        this._firstName = firstName;
-        this._lastName = lastName;
-        this._email = email;
-        this._username = username;
-        this._password = hashedPassword;
-        this._userID = null;
-        this._posts = []
-        this._role = null;
+    constructor (userData) {
+        this._firstName = userData.firstName;
+        this._lastName = userData.lastName;
+        this._fullName = userData.fullName;
+        this._email = userData.email;
+        this._username = userData.username;
+        this._password = userData.password;
+        this._userID = userData.userID;
+        this._posts = [];
     }
 
     // Rehydrate by ID
@@ -27,17 +26,16 @@ export class UserClass {
         return userRecord ? UserClass._createInstance(userRecord) : null;
     }
 
-    // Factory
+    // Factory Pattern Applied
     static _createInstance(userRecord) {
-        const { firstName, lastName, email, username, password, role } = userRecord;
-
-        if (role === "Admin") {
-            const user = new AdminClass(firstName, lastName, email, username, password);
+        const userData = userRecord.toJSON();
+        if (userData.role === "Admin") {
+            const user = new AdminClass(userData);
             user._userID = userRecord.userID;
             return user;
         }
 
-        const user = new RegularUserClass(firstName, lastName, email, username, password);
+        const user = new RegularUserClass(userData);
         user._userID = userRecord.userID;
         return user;
     }
@@ -63,6 +61,7 @@ export class UserClass {
         await currentPost.deleteProject();
     }
 
+    // Encapsulation/ Abstraction Principles applied  for Getters/Setters
     async getPosts() {
         const posts = await models.Post.findAll({where: {authorID: this._userID}});
         posts.forEach(post => {
@@ -180,10 +179,11 @@ export class UserClass {
     }
 }
 
+// Inheritance Principle Applied
 export class RegularUserClass extends UserClass {
-    constructor(firstName, lastName, email, username, hashedPassword) {
-        super(firstName, lastName, email, username, hashedPassword);
-        this.role = "User";
+    constructor(userData) {
+        super(userData);
+        this._role = "User";
         this._projects = [];
         this._following = [];
         this._followers = [];
@@ -286,13 +286,16 @@ export class RegularUserClass extends UserClass {
             });
         }
     }
+    get role(){
+        return this._role;
+    }
 }
 
 
 export class AdminClass extends UserClass {
-    constructor(firstName, lastName, email, username, hashedPassword) {
-        super(firstName, lastName, email, username, hashedPassword);
-        this.role = "Admin";
+    constructor(userData) {
+        super(userData);
+        this._role = "Admin";
     }
 
 
@@ -303,6 +306,10 @@ export class AdminClass extends UserClass {
             console.log(`User ${userID} banned,`);
         }
         console.log("No user with the userID: ", userID);
+    }
+
+    get role(){
+        return this._role;
     }
 }
 
