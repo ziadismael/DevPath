@@ -6,6 +6,7 @@ class ProjectClass {
         this._projectName = projectData.projectName;
         this._githubRepo = projectData.gitHubRepo || null;
         this._teamID = projectData.teamID || null;
+        this._projectID = projectData.projectID || null;
         this.description = projectData.description || null;
         this.liveDemoURL = projectData.liveDemoURL || null;
         this.techStack = projectData.techStack || [];
@@ -34,7 +35,7 @@ class ProjectClass {
 
      // * Creates a project for a specific, existing team.
      // * Includes authorization to ensure the user is a member of the team.
-    static async createForTeam(projectData, user) {
+    static async createForTeam(projectData, user, userRecord) {
         if (!projectData.teamID) {
             throw new Error("A teamID must be provided to create a team project.");
         }
@@ -43,7 +44,7 @@ class ProjectClass {
             throw new Error(`Team with ID ${projectData.teamID} not found.`);
         }
 
-        const isMember = await team.hasUser(user);
+        const isMember = await team.hasUser(userRecord);
         if (!isMember) {
             throw new Error(`You are not authorized to add a project to this team.`);
         }
@@ -53,7 +54,7 @@ class ProjectClass {
 
      // * Creates a project for a user's personal team.
      // * It will find or create the personal team automatically.
-    static async createPersonal(projectData, user) {
+    static async createPersonal(projectData, user, userRecord) {
         let personalTeam = await models.Team.findOne({
             where: { isPersonal: true },
             include: { model: models.User, where: { userID: user.userID } }
@@ -64,7 +65,7 @@ class ProjectClass {
                 teamName: `${user.getUsername()}'s Personal Projects`,
                 isPersonal: true,
             });
-            await personalTeam.addUser(user, { through: { role: 'Owner' } });
+            await personalTeam.addUser(userRecord, { through: { role: 'Owner' } });
         }
 
         return await ProjectClass.#createRecord(projectData, personalTeam.teamID);

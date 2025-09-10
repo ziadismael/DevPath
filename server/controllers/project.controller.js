@@ -4,9 +4,9 @@ export const createProject = async (req, res, next) => {
     try {
         let newProject;
         if (req.body.teamID) {
-            newProject = await ProjectClass.createForTeam(req.body, req.user);
+            newProject = await ProjectClass.createForTeam(req.body, req.user, req.userRecord);
         } else {
-            newProject = await ProjectClass.createPersonal(req.body, req.user);
+            newProject = await ProjectClass.createPersonal(req.body, req.user, req.userRecord);
         }
 
         res.status(201).json({
