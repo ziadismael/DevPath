@@ -44,8 +44,13 @@ class ProjectClass {
             throw new Error(`Team with ID ${projectData.teamID} not found.`);
         }
 
-        const isMember = await team.hasUser(userRecord);
-        if (!isMember) {
+        const memberRecord = await models.TeamMember.findOne({
+            where: {
+                teamID: team.teamID,
+                userID: user.userID
+            }
+        });
+        if (!memberRecord) {
             throw new Error(`You are not authorized to add a project to this team.`);
         }
 
