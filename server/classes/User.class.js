@@ -276,10 +276,10 @@ export class RegularUserClass extends UserClass {
 
     }
 
-    applyToInternship (internshipID) {
-        const internship = models.Internship.findOne(internshipID);
+    async applyToInternship (internshipID) {
+        const internship = await models.Internship.findByPk(internshipID);
         if (internship){
-            models.Application.create({
+            await models.Application.create({
                 status: 'Applied',
                 internshipID,
                 userID: this._userID,

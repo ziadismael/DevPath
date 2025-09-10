@@ -3,99 +3,125 @@ import * as console from "node:console";
 import {Error} from "sequelize";
 
 class InternshipClass {
-    constructor(title, description, company, application) {
-        this._description = description;
-        this._title = title;
-        this._company = company;
-        this._application = application;
-        this._mediaURL = null;
-        this._internshipID = null;
+    constructor(data) {
+        this.title = data.title;
+        this.company = data.company;
+        this.location = data.location;
+        this.workplaceType = data.workplaceType;
+        this.mediaURL = data.mediaURL;
+        this.applyLink = data.applyLink;
+    }
+
+    static async createFromScrapedJob(job) {
+        const jobUrl = job.jobUrl;
+        const [internship] = await models.Internship.findOrCreate({
+            where: { applyLink: jobUrl },  // prevent duplicates
+            defaults: {
+                title: job.position,
+                company: job.company,
+                description: job.description,
+                location: job.location,
+                mediaURL: job.companyLogo || null,
+                applyLink: jobUrl,
+            },
+        });
+
+        return new InternshipClass(internship);
+    }
+
+    static async bulkCreateFromScrapedJobs(jobs) {
+        return Promise.all(jobs.map(job => this.createFromScrapedJob(job)));
     }
 
     async saveToDB(){
         const currentInternship = await models.Internship.create({
-            description: this._description,
-            company: this._company,
-            application: this._application,
-            mediaURL: this._mediaURL,
-            title: this._title,
+            description: this.description,
+            company: this.company,
+            application: this.application,
+            mediaURL: this.mediaURL,
+            title: this.title,
         });
         if (currentInternship) {
             console.log("Internship has been created successfully: ", currentInternship);
-            this._internshipID = currentInternship.internshipID;
+            this.internshipID = currentInternship.internshipID;
         }
     }
 
     async saveUpdates(){
-        const currentInternship = await models.Internship.findByPk(this._internshipID);
+        const currentInternship = await models.Internship.findByPk(this.internshipID);
         if (!currentInternship) {
             throw new Error("Internship does not exist yet!");
         }
-        currentInternship.title = this._title;
-        currentInternship.company = this._company;
-        currentInternship.mediaURL = this._mediaURL;
-        currentInternship.internshipID = this._internshipID;
-        currentInternship.applyLink = this._application;
-        currentInternship.description = this._description;
+        currentInternship.title = this.title;
+        currentInternship.company = this.company;
+        currentInternship.mediaURL = this.mediaURL;
+        currentInternship.internshipID = this.internshipID;
+        currentInternship.applyLink = this.application;
+        currentInternship.description = this.description;
 
         await currentInternship.save();
     }
 
-
-    get title() {
-        return this._title;
+    // ---- Static methods for fetching ----
+    static async findById(id) {
+        const internship = await models.Internship.findByPk(id);
+        return internship ? new InternshipClass(internship.toJSON()) : null;
     }
-    get description() {
-        return this._description;
-    }
-    get company() {
-        return this._company;
-    }
-    get application() {
-        return this._application;
-    }
-    get mediaURL() {
-        return this._mediaURL;
-    }
-    get internshipID() {
-        return this._internshipID;
-    }
-
-    async setTitle(title) {
-        if (typeof title !== "string") {
-            throw new Error("title must be a string");
-        }
-        this._title = title;
-        await this.saveUpdates();
-    }
-    async setCompany(company) {
-        if (typeof company !== "string") {
-            throw new Error("company must be a string");
-        }
-        this._company = company;
-        await this.saveUpdates();
-    }
-    async setApplication(application) {
-        if (typeof application !== "string") {
-            throw new Error("application must be a string");
-        }
-        this._application = application;
-        await this.saveUpdates();
-    }
-    async setMediaURL(mediaURL) {
-        if (typeof mediaURL !== "string") {
-            throw new Error("mediaURL must be a string");
-        }
-        this._mediaURL = mediaURL;
-        await this.saveUpdates();
-    }
-    async setDescription(description) {
-        if (typeof description !== "string") {
-            throw new Error("description must be a string");
-        }
-        this._description = description;
-        await this.saveUpdates();
-    }
+    //
+    // get title() {
+    //     return this._title;
+    // }
+    // get description() {
+    //     return this._description;
+    // }
+    // get company() {
+    //     return this._company;
+    // }
+    // get application() {
+    //     return this._application;
+    // }
+    // get mediaURL() {
+    //     return this._mediaURL;
+    // }
+    // get internshipID() {
+    //     return this._internshipID;
+    // }
+    //
+    // async setTitle(title) {
+    //     if (typeof title !== "string") {
+    //         throw new Error("title must be a string");
+    //     }
+    //     this._title = title;
+    //     await this.saveUpdates();
+    // }
+    // async setCompany(company) {
+    //     if (typeof company !== "string") {
+    //         throw new Error("company must be a string");
+    //     }
+    //     this._company = company;
+    //     await this.saveUpdates();
+    // }
+    // async setApplication(application) {
+    //     if (typeof application !== "string") {
+    //         throw new Error("application must be a string");
+    //     }
+    //     this._application = application;
+    //     await this.saveUpdates();
+    // }
+    // async setMediaURL(mediaURL) {
+    //     if (typeof mediaURL !== "string") {
+    //         throw new Error("mediaURL must be a string");
+    //     }
+    //     this._mediaURL = mediaURL;
+    //     await this.saveUpdates();
+    // }
+    // async setDescription(description) {
+    //     if (typeof description !== "string") {
+    //         throw new Error("description must be a string");
+    //     }
+    //     this._description = description;
+    //     await this.saveUpdates();
+    // }
 
 }
 
