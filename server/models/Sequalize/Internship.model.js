@@ -16,6 +16,9 @@ const Internship = sequelize.define('Internship', {
         company: {
             type: DataTypes.STRING,
         },
+        location:{
+            type: DataTypes.STRING,
+        },
         mediaURL: {
             type: DataTypes.STRING,
             allowNull: true,

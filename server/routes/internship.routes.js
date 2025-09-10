@@ -1,21 +1,24 @@
 import {Router} from 'express';
-import {internshipController} from '../controllers/internship.controller.js';
+import {syncJobs, getInternship, getAllInternships, createInternship, updateInternship, deleteInternship} from '../controllers/internship.controller.js';
+import { authorize, authorizeAdmin} from "../middlewares/auth.middleware.js";
 
 const internshipRouter = Router();
 
 // Public: browse internships
-internshipRouter.get('/', internshipController.getAllInternships);
-internshipRouter.get('/:internshipID', internshipController.getInternship);
+internshipRouter.get('/', getAllInternships);
+internshipRouter.get('/:internshipID', getInternship);
 
 // Applications
-internshipRouter.post('/:internshipID/apply', internshipController.applyToInternship);
+// internshipRouter.post('/:internshipID/apply', applyToInternship);
 
 // Reviews
-internshipRouter.post('/:internshipID/reviews', internshipController.writeReview);
+// internshipRouter.post('/:internshipID/reviews', writeReview);
 
 // CRUD for internship listings (admin/employer only)
-internshipRouter.post('/', internshipController.createInternship);
-internshipRouter.put('/:internshipID', internshipController.updateInternship);
-internshipRouter.delete('/:internshipID', internshipController.deleteInternship);
+internshipRouter.post('/', authorize, authorizeAdmin, createInternship);
+internshipRouter.put('/:internshipID', authorize, authorizeAdmin, updateInternship);
+internshipRouter.delete('/:internshipID', authorize, authorizeAdmin, deleteInternship);
 
+// Qstash Scheduling
+internshipRouter.post('/sync', syncJobs)
 export default internshipRouter;

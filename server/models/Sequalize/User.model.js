@@ -36,10 +36,10 @@ const User = sequelize.define("User", {
         type: DataTypes.ENUM("Admin", "User"),
         defaultValue: "User",
    },
-    followingList: {
-
+    country: {
+       type: DataTypes.STRING,
+        allowNull: true,
     }
-
     },
     {
     timestamps: false,
