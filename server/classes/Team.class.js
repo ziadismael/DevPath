@@ -1,38 +1,82 @@
 import {models} from "../models/index.models.js";
+import UserClass from "../models/user.class.js";
 
 class TeamClass {
-    constructor(teamName) {
-        this._teamName = teamName;
-        this._teamID = null;
-        this._teamMembers = [];
-        this._projects = [];
+    constructor(teamData) {
+        this._teamID = teamData.teamID;
+        this._teamName = teamData.teamName;
+        this._isPersonal = teamData.isPersonal;
+        // Eager-loaded relations can be passed in constructor
+        this._members = teamData.Users ? teamData.Users.map(u => new UserClass(u.toJSON())) : [];
     }
 
-    async saveToDB() {
-        const newTeam = await models.Team.create({
-            teamName: this._teamName
+    static async create(teamData, user) {
+        const newTeamRecord = await models.Team.create({
+            teamName: teamData.teamName,
         });
-        this._teamID = newTeam.teamID;
+
+        // Add the creator as the first member with the 'Owner' role
+        await newTeamRecord.addUser(user, { through: { role: 'Owner' } });
+
+        return new TeamClass(newTeamRecord.toJSON());
     }
 
-    async loadRelations() {
-        const team = await models.Team.findByPk(this._teamID, {
-            include: [models.User, models.Project]
+    async saveUpdates() {
+        const teamRecord = await models.Team.findByPk(this._teamID);
+        teamRecord.teamName = this._teamName;
+        await teamRecord.save();
+    }
+
+    async destroy() {
+        // Add logic to handle projects if necessary (e.g., prevent deletion if projects exist)
+        await models.Team.destroy({ where: { teamID: this._teamID } });
+    }
+
+     // Finds a team by its primary key, including its members.
+    static async findById(teamID) {
+        const teamRecord = await models.Team.findByPk(teamID, {
+            include: { model: models.User, attributes: ['userID', 'username', 'email'] }
         });
-        this._teamMembers = team.Users;
-        this._projects = team.Projects;
+        return teamRecord ? new TeamClass(teamRecord.toJSON()) : null;
+    }
+
+     // Finds all teams that a specific user is a member of.
+    static async findForUser(user) {
+        const teams = await user.getTeams({
+            joinTableAttributes: ['role'], // Include the role from the TeamMember table
+            include: { model: models.User, attributes: ['userID', 'username'] }
+        });
+        return teams.map(t => new TeamClass(t.toJSON()));
     }
 
 
-    async addMember(userID){
+    async addMember(user, role = 'Contributor') {
         const team = await models.Team.findByPk(this._teamID);
-        const user = await models.User.findByPk(userID);
 
         if (!user || !team) {
             throw new Error("Cannot add user: userID / teamID is invalid.");
         }
-        await team.addUser(user);
-        this._teamMembers.push(user);
+        await team.addUser(user, { through: { role } });
+    }
+
+    async removeMember(user) {
+        const teamRecord = await models.Team.findByPk(this._teamID);
+        if (!user || !teamRecord) {
+            throw new Error("Cannot add user: userID / teamID is invalid.");
+        }
+        await teamRecord.removeUser(user);
+    };
+
+
+    async isOwner(user) {
+        const member = await models.TeamMember.findOne({
+            where: {
+                teamID: this._teamID,
+                userID: user.userID,
+                role: 'Owner'
+            }
+        });
+        return !!member;
     }
 
     async assignProject(projectInstance){
