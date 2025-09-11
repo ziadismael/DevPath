@@ -89,7 +89,7 @@ class PostClass {
     }
 
     isAuthor(userRecord) {
-        return this._userID === userRecord.userID;
+        return (this._userID === userRecord.userID)&&(userRecord.role !== "Admin");
     }
 
     set title(value) {

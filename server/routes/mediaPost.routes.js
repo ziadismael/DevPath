@@ -19,7 +19,7 @@ postRouter.get('/', authorize, authorizeAdmin, getAllPosts); // Admin-only acces
 postRouter.put('/:postID',authorize, editPost);              // <- edit/update post through given ID
 
 // D(elete) - DELETE Method
-postRouter.delete('/:postID', deletePost);
+postRouter.delete('/:postID', authorize, deletePost);
 
 // ---------------------------------COMMENTS---------------------------------
 // Create a new comment on a specific post

@@ -89,9 +89,15 @@ export const editPost = async (req, res, next) => {
 // Corresponds to: postRouter.delete('/:postID', deletePost);
 export const deletePost = async (req, res, next) => {
     try {
-        const { postID } = req.params;
-        const post = await PostClass.findById(postID);
 
+        // ADDED: Guard clause to ensure req.user and req.userRecord exist.
+        if (!req.user || !req.userRecord) {
+            const error = new Error('Authentication error: User not found.');
+            error.status = 401; // Unauthorized
+            throw error;
+        }
+
+        const post = await PostClass.findById(req.params.postID);
         if (!post) {
             const error = new Error('Post not found.');
             error.status = 404;
@@ -99,13 +105,14 @@ export const deletePost = async (req, res, next) => {
         }
 
         // Authorization Check
-        if (!post.isAuthor(req.userRecord) && req.user.role !== 'Admin') {
+        const isAuthorized = await post.isAuthor(req.userRecord);
+        if (!isAuthorized) {
             const error = new Error('You are not authorized to delete this post.');
             error.status = 403;
             throw error;
         }
 
-        await post.destroy();
+        await post.deletePost();
         res.status(200).json({ success: true, message: 'Post deleted successfully.' });
     } catch (error) {
         next(error);
