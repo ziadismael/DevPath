@@ -209,6 +209,20 @@ export class RegularUserClass extends UserClass {
         currentUser.removeFollowing(userToFollow);
     }
 
+    async getFollowingIDs() {
+        const userRecord = await models.User.findByPk(this._userID);
+        if (!userRecord) return [];
+
+        // 2. Use the "getFollowing" helper that Sequelize created for our Follows association
+        const following = await userRecord.getFollowing({
+            attributes: ['userID'], // We only need their IDs
+            joinTableAttributes: [] // We don't need data from the join table
+        });
+
+        // 3. Return a simple array of UUIDs
+        return following.map(u => u.userID);
+    }
+
     async getProjects () {
         const projects = await models.Project.findAll({
             include: {

@@ -9,9 +9,11 @@ const Post = sequelize.define('Post', {
     },
     bodyText: {
         type: DataTypes.TEXT,
+        allowNull: false,
     },
     title: {
         type: DataTypes.STRING,
+        allowNull: false,
     },
     mediaURL: {
         type: DataTypes.STRING,
@@ -19,7 +21,7 @@ const Post = sequelize.define('Post', {
     }
     },
     {
-        timestamps: false,
+        timestamps: true,
     });
 
 export default Post;
