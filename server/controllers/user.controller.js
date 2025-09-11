@@ -66,24 +66,38 @@ export const getAllUsers = async (req, res, next) => {
     }
 }
 
-
 export const followUser = async (req, res, next) => {
-    try{
-        const currentUser = req.user;
-        await currentUser.follow(req.params.username);
-    }
-    catch (error) {
+    try {
+        const userToFollowRecord = await models.User.findOne({ where: { username: req.params.username } });
+
+        if (!userToFollowRecord) {
+            const error = new Error('User not found.');
+            error.status = 404;
+            throw error;
+        }
+
+        await req.user.follow(userToFollowRecord, req.userRecord);
+
+        res.status(200).json({ success: true, message: `You are now following ${req.params.username}.` });
+    } catch (error) {
         next(error);
     }
-}
+};
 
 export const unfollowUser = async (req, res, next) => {
-    try{
-        const currentUser = req.user;
-        await currentUser.unfollow(req.params.username);
-    }
-    catch (error) {
+    try {
+        const userToUnfollowRecord = await models.User.findOne({ where: { username: req.params.username } });
+
+        if (!userToUnfollowRecord) {
+            const error = new Error('User not found.');
+            error.status = 404;
+            throw error;
+        }
+
+        await req.user.unfollow(userToUnfollowRecord, req.userRecord);
+
+        res.status(200).json({ success: true, message: `You have unfollowed ${req.params.username}.` });
+    } catch (error) {
         next(error);
     }
-}
-
+};

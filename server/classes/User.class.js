@@ -189,25 +189,26 @@ export class RegularUserClass extends UserClass {
         this._followers = [];
     }
 
-    async follow(username){
-        const userToFollow = await UserClass.findByUsername(username);
-        const currentUser = await UserClass.findByUsername(this._username);
-        const isFollowing = await userToFollow.hasFollowing(currentUser)
-        if(isFollowing){
-           console.log(`You already are following user ${userToFollow.username}.`);
+    async follow(userToFollowRecord, currentUserRecord) {
+        const isFollowing = await currentUserRecord.hasFollowing(userToFollowRecord);
+        if (isFollowing) {
+            const error = new Error(`You are already following this user.`);
+            error.status = 409;
+            throw error;
         }
-        currentUser.addFollowing(userToFollow);
+        await currentUserRecord.addFollowing(userToFollowRecord);
     }
 
-    async unfollow(username){
-        const userToFollow = await UserClass.findByUsername(username);
-        const currentUser = await UserClass.findByUsername(this._username);
-        const isFollowing = await userToFollow.hasFollowing(currentUser)
-        if(!isFollowing){
-            console.log(`You are not following user ${userToFollow.username}.`);
+    async unfollow(userToUnfollowRecord, currentUserRecord) {
+        const isFollowing = await currentUserRecord.hasFollowing(userToUnfollowRecord);
+        if (!isFollowing) {
+            const error = new Error(`You are not following this user.`);
+            error.status = 404;
+            throw error;
         }
-        currentUser.removeFollowing(userToFollow);
+        await currentUserRecord.removeFollowing(userToUnfollowRecord);
     }
+
 
     async getFollowingIDs() {
         const userRecord = await models.User.findByPk(this._userID);
