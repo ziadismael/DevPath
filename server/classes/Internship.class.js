@@ -24,6 +24,13 @@ class InternshipClass {
 
     static async createFromScrapedJob(job) {
         const jobUrl = job.jobUrl;
+
+        if (!jobUrl) {
+            // If there's no URL, we can't use it as a unique identifier, so we skip it.
+            console.warn("Skipping job with no URL:", job.position);
+            return null;
+        }
+
         const [internship] = await models.Internship.findOrCreate({
             where: { applyLink: jobUrl },  // prevent duplicates
             defaults: {
