@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const AIInterview: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        // Set dynamic page title
+        if (isAuthenticated) {
+            document.title = 'AI Interview | DevPath';
+        } else {
+            document.title = 'DevPath | Empower Your Developer Journey';
+        }
+    }, [isAuthenticated]);
 
     const handleStartInterview = () => {
         if (!isAuthenticated) {

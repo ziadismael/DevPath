@@ -21,6 +21,15 @@ const Community: React.FC = () => {
         fetchPosts();
     }, [isAuthenticated]);
 
+    useEffect(() => {
+        // Set dynamic page title
+        if (isAuthenticated) {
+            document.title = 'Community | DevPath';
+        } else {
+            document.title = 'DevPath | Empower Your Developer Journey';
+        }
+    }, [isAuthenticated]);
+
     const fetchPosts = async () => {
         try {
             setIsLoading(true);

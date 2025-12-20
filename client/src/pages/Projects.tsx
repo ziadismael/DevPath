@@ -21,6 +21,15 @@ const Projects: React.FC = () => {
         }
     }, [isAuthenticated]);
 
+    useEffect(() => {
+        // Set dynamic page title
+        if (isAuthenticated) {
+            document.title = 'Projects | DevPath';
+        } else {
+            document.title = 'DevPath | Empower Your Developer Journey';
+        }
+    }, [isAuthenticated]);
+
     const fetchProjects = async () => {
         try {
             setIsLoading(true);

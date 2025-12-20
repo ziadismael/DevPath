@@ -1,7 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Home: React.FC = () => {
+    const { isAuthenticated, user } = useAuth();
+
+    useEffect(() => {
+        // Set dynamic page title
+        if (isAuthenticated && user) {
+            document.title = `DevPath | @${user.username}`;
+        } else {
+            document.title = 'DevPath | Empower Your Developer Journey';
+        }
+    }, [isAuthenticated, user]);
+
     return (
         <div className="relative">
             {/* Hero Section */}

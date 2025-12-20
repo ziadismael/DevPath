@@ -18,6 +18,15 @@ const Internships: React.FC = () => {
         fetchInternships();
     }, [selectedFilter]);
 
+    useEffect(() => {
+        // Set dynamic page title
+        if (isAuthenticated) {
+            document.title = 'Internships | DevPath';
+        } else {
+            document.title = 'DevPath | Empower Your Developer Journey';
+        }
+    }, [isAuthenticated]);
+
     const fetchInternships = async () => {
         try {
             setIsLoading(true);
