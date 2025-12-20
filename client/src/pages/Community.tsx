@@ -19,12 +19,49 @@ const Community: React.FC = () => {
 
     useEffect(() => {
         fetchPosts();
-    }, []);
+    }, [isAuthenticated]);
 
     const fetchPosts = async () => {
         try {
             setIsLoading(true);
             setError('');
+
+            // If not authenticated, show mock posts instead of making API call
+            if (!isAuthenticated) {
+                const mockPosts: Post[] = [
+                    {
+                        postID: 'mock-1',
+                        title: 'Welcome to DevPath Community!',
+                        bodyText: 'Join our community to connect with developers, share your projects, and learn together. Sign in to see real posts and start engaging!',
+                        User: { username: 'devpath', firstName: 'DevPath', lastName: 'Team', email: '', role: 'User' },
+                        likes: 42,
+                        Comments: [],
+                        createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                    },
+                    {
+                        postID: 'mock-2',
+                        title: 'Share Your Projects',
+                        bodyText: 'Our community loves seeing what you\'re building! Share your latest projects, get feedback, and inspire others.',
+                        User: { username: 'community', firstName: 'Community', lastName: 'Manager', email: '', role: 'User' },
+                        likes: 28,
+                        Comments: [],
+                        createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+                    },
+                    {
+                        postID: 'mock-3',
+                        title: 'Learning Resources',
+                        bodyText: 'Check out our curated list of learning resources. From beginner tutorials to advanced topics, we\'ve got you covered!',
+                        User: { username: 'educator', firstName: 'Learning', lastName: 'Hub', email: '', role: 'User' },
+                        likes: 35,
+                        Comments: [],
+                        createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+                    },
+                ];
+                setPosts(mockPosts);
+                setIsLoading(false);
+                return;
+            }
+
             // Use getPosts() for global feed (all posts)
             const response = await communityAPI.getPosts();
             const data = Array.isArray(response) ? response : (response.posts || response.data || []);
@@ -32,14 +69,23 @@ const Community: React.FC = () => {
             setPosts(data);
         } catch (err: any) {
             console.error('Error fetching posts:', err);
-            setError(err.message || 'Failed to load posts');
-            setPosts([]);
+            // Don't show error for 401 when not authenticated
+            if (err.response?.status === 401 && !isAuthenticated) {
+                setPosts([]);
+            } else {
+                setError(err.message || 'Failed to load posts');
+                setPosts([]);
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     const handlePostClick = (post: Post) => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: { pathname: '/community' } } });
+            return;
+        }
         setSelectedPost(post);
         setIsPostDetailOpen(true);
     };
@@ -117,6 +163,25 @@ const Community: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Preview Mode Banner for Unauthenticated Users */}
+                {!isAuthenticated && (
+                    <div className="mb-8 p-6 glass rounded-xl border border-electric-500/30">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-electric-600/20 flex items-center justify-center">
+                                <span className="text-2xl">🔒</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-mono font-semibold text-white mb-1">
+                                    Preview Mode
+                                </h3>
+                                <p className="text-sm text-slate-400">
+                                    Sign in to create posts, like, comment, and interact with the community
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Posts Feed */}
                 {isLoading ? (
