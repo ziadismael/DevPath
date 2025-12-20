@@ -68,7 +68,7 @@ const Navbar: React.FC = () => {
 
                                 {/* Dropdown Menu */}
                                 {showUserMenu && (
-                                    <div className="absolute right-0 mt-2 w-48 glass rounded-lg shadow-glow-md border border-white/10 py-2">
+                                    <div className="absolute right-0 mt-2 w-48 bg-void-900/95 backdrop-blur-lg rounded-lg shadow-glow-md border border-white/10 py-2">
                                         <div className="px-4 py-2 border-b border-white/10">
                                             <p className="text-sm font-mono text-slate-400">Signed in as</p>
                                             <p className="text-sm font-semibold text-white truncate">{user?.username}</p>

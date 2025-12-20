@@ -42,7 +42,7 @@ const Community: React.FC = () => {
                         postID: 'mock-1',
                         title: 'Welcome to DevPath Community!',
                         bodyText: 'Join our community to connect with developers, share your projects, and learn together. Sign in to see real posts and start engaging!',
-                        User: { username: 'devpath', firstName: 'DevPath', lastName: 'Team', email: '', role: 'User' },
+                        User: { username: 'devpath', firstName: 'DevPath', lastName: 'Team' },
                         likes: 42,
                         Comments: [],
                         createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
@@ -51,7 +51,7 @@ const Community: React.FC = () => {
                         postID: 'mock-2',
                         title: 'Share Your Projects',
                         bodyText: 'Our community loves seeing what you\'re building! Share your latest projects, get feedback, and inspire others.',
-                        User: { username: 'community', firstName: 'Community', lastName: 'Manager', email: '', role: 'User' },
+                        User: { username: 'community', firstName: 'Community', lastName: 'Manager' },
                         likes: 28,
                         Comments: [],
                         createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
@@ -60,7 +60,7 @@ const Community: React.FC = () => {
                         postID: 'mock-3',
                         title: 'Learning Resources',
                         bodyText: 'Check out our curated list of learning resources. From beginner tutorials to advanced topics, we\'ve got you covered!',
-                        User: { username: 'educator', firstName: 'Learning', lastName: 'Hub', email: '', role: 'User' },
+                        User: { username: 'educator', firstName: 'Learning', lastName: 'Hub' },
                         likes: 35,
                         Comments: [],
                         createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
