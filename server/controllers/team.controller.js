@@ -165,7 +165,9 @@ export const removeTeamMember = async (req, res, next) => {
 
         const userToRemove = await UserClass.findById(req.params.userID);
         const userRecord = await models.User.findByPk(req.params.userID);
-        if (!userToRemove) {
+
+        // Check BOTH userToRemove AND userRecord for null
+        if (!userToRemove || !userRecord) {
             const error = new Error('User to remove not found.');
             error.status = 404;
             throw error;
