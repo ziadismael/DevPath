@@ -138,12 +138,23 @@ export const addTeamMember = async (req, res, next) => {
 
 export const removeTeamMember = async (req, res, next) => {
     try {
-        const team = await TeamClass.findById(req.params.teamID);
-        if (!team) {
+        // Fetch raw team record (not serialized) for authorization
+        const teamRecord = await models.Team.findByPk(req.params.teamID, {
+            include: {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName', 'email'],
+                through: { attributes: ['role'] }
+            }
+        });
+
+        if (!teamRecord) {
             const error = new Error('Team not found');
             error.status = 404;
             throw error;
         }
+
+        // Create TeamClass instance for authorization check
+        const team = new TeamClass(teamRecord.toJSON());
 
         const isAuthorized = await team.isOwner(req.user);
         if (!isAuthorized) {
@@ -153,7 +164,7 @@ export const removeTeamMember = async (req, res, next) => {
         }
 
         const userToRemove = await UserClass.findById(req.params.userID);
-        const userRecord = await models.User.findByPk(req.params.userID);  // Fixed: use userID not teamID
+        const userRecord = await models.User.findByPk(req.params.userID);
         if (!userToRemove) {
             const error = new Error('User to remove not found.');
             error.status = 404;
