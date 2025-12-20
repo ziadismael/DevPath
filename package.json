@@ -1,0 +1,19 @@
+{
+    "name": "devpath",
+    "version": "1.0.0",
+    "description": "DevPath - Empower Your Developer Journey",
+    "main": "index.js",
+    "scripts": {
+        "dev:server": "cd server && npm run dev",
+        "dev:client": "cd client && npm run dev",
+        "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
+    },
+    "keywords": [
+        "devpath",
+        "internship",
+        "interview",
+        "portfolio"
+    ],
+    "author": "",
+    "license": "ISC"
+}
