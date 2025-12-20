@@ -52,6 +52,27 @@ const Community: React.FC = () => {
         }
     };
 
+    const handlePostCreated = () => {
+        setIsModalOpen(false);
+        fetchPosts(); // Refresh posts after creating new post
+    };
+
+    const handlePostUpdated = async () => {
+        // Refetch posts to get updated like counts and comments
+        await fetchPosts();
+        // Update the selected post with fresh data
+        if (selectedPost) {
+            const response = await communityAPI.getPosts();
+            const data = Array.isArray(response) ? response : (response.posts || response.data || []);
+            const updatedPost = data.find((p: Post) =>
+                (p.postID || p.id) === (selectedPost.postID || selectedPost.id)
+            );
+            if (updatedPost) {
+                setSelectedPost(updatedPost);
+            }
+        }
+    };
+
     const getTimeAgo = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -141,11 +162,11 @@ const Community: React.FC = () => {
                                 {/* Post Header */}
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-lg font-bold text-white">
-                                        {post.user?.username?.[0]?.toUpperCase() || 'U'}
+                                        {post.User?.username?.[0]?.toUpperCase() || 'U'}
                                     </div>
                                     <div>
                                         <h4 className="font-mono font-semibold text-white">
-                                            @{post.user?.username || 'anonymous'}
+                                            @{post.User?.username || 'anonymous'}
                                         </h4>
                                         <p className="text-xs text-slate-500">
                                             {post.createdAt ? getTimeAgo(post.createdAt) : 'Recently'}
@@ -169,7 +190,7 @@ const Community: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-slate-500">
                                         <span>💬</span>
-                                        <span>{post.comments?.length || 0}</span>
+                                        <span>{post.Comments?.length || post.comments?.length || 0}</span>
                                     </div>
                                     <div className="ml-auto text-xs text-slate-600 group-hover:text-electric-400 transition-colors">
                                         Click to view details →
@@ -196,7 +217,7 @@ const Community: React.FC = () => {
                     setSelectedPost(null);
                 }}
                 post={selectedPost}
-                onPostUpdated={fetchPosts}
+                onPostUpdated={handlePostUpdated}
             />
         </div>
     );
