@@ -83,13 +83,27 @@ export const getProjectById = async (req, res, next) => {
 export const updateProject = async (req, res, next) => {
     try {
         const { projectID } = req.params;
-        const project = await ProjectClass.findById(projectID);
 
-        if (!project) {
+        // Fetch the raw project record (not serialized)
+        const projectRecord = await models.Project.findByPk(projectID, {
+            include: {
+                model: models.Team,
+                include: {
+                    model: models.User,
+                    attributes: ['userID', 'username', 'firstName', 'lastName'],
+                    through: { attributes: ['role'] }
+                }
+            }
+        });
+
+        if (!projectRecord) {
             const error = new Error("Project not found");
             error.status = 404;
             throw error;
         }
+
+        // Create ProjectClass instance for authorization check
+        const project = new ProjectClass(projectRecord.toJSON());
 
         // --- AUTHORIZATION CHECK ---
         const isAuthorized = await project.isTeamMember(req.user);
@@ -99,17 +113,20 @@ export const updateProject = async (req, res, next) => {
             throw error;
         }
 
-        project._projectName = req.body.projectName || project._projectName;
-        project._description = req.body.description || project._description;
-        project._githubRepo = req.body.gitHubRepo || project._githubRepo;
-        project._liveDemoURL = req.body.liveDemoURL || project._liveDemoURL;
-        project._screenshots = req.body.screenshots || project._screenshots;
-        project._techStack = req.body.techStack || project._techStack;
-        await project.saveUpdates();
+        // Update the database record directly
+        projectRecord.projectName = req.body.projectName || projectRecord.projectName;
+        projectRecord.description = req.body.description || projectRecord.description;
+        projectRecord.gitHubRepo = req.body.gitHubRepo || projectRecord.gitHubRepo;
+        projectRecord.liveDemoURL = req.body.liveDemoURL || projectRecord.liveDemoURL;
+        projectRecord.screenshots = req.body.screenshots || projectRecord.screenshots;
+        projectRecord.techStack = req.body.techStack || projectRecord.techStack;
+        await projectRecord.save();
 
+        // Return serialized version
+        const updatedProject = new ProjectClass(projectRecord.toJSON());
         res.status(200).json({
-            message: `Endpoint for updating project with ID: ${projectID}`,
-            data: project,
+            message: `Project updated successfully`,
+            data: updatedProject.toJSON(),
         });
     } catch (error) {
         next(error);
