@@ -16,6 +16,36 @@ class ProjectClass {
         this.updatedAt = projectData.updatedAt || null;
     }
 
+    // Serialize to JSON with proper field names for frontend
+    toJSON() {
+        // Extract user from Team if not directly available
+        let user = this.user;
+        if (!user && this.Team && this.Team.Users && this.Team.Users.length > 0) {
+            user = {
+                username: this.Team.Users[0].username,
+                firstName: this.Team.Users[0].firstName,
+                lastName: this.Team.Users[0].lastName,
+                userID: this.Team.Users[0].userID
+            };
+        }
+
+        return {
+            projectID: this._projectID,  // Use projectID without underscore
+            id: this._projectID,  // Also provide id for compatibility
+            projectName: this._projectName,
+            gitHubRepo: this._githubRepo,
+            teamID: this._teamID,
+            description: this.description,
+            liveDemoURL: this.liveDemoURL,
+            techStack: this.techStack,
+            screenshots: this.screenshots,
+            Team: this.Team,
+            user: user,  // Ensure user is populated
+            createdAt: this.createdAt,
+            updatedAt: this.updatedAt
+        };
+    }
+
     static async findById(projectID) {
         const projectRecord = await models.Project.findByPk(projectID, {
             include: {
@@ -27,7 +57,9 @@ class ProjectClass {
                 }
             }
         });
-        return projectRecord ? new ProjectClass(projectRecord.toJSON()) : null;
+        if (!projectRecord) return null;
+        const project = new ProjectClass(projectRecord.toJSON());
+        return project.toJSON();  // Return serialized version
     }
 
     static async findAll() {
@@ -42,7 +74,10 @@ class ProjectClass {
                 }
             }
         });
-        return projectRecords.map(record => new ProjectClass(record.toJSON()));
+        return projectRecords.map(record => {
+            const project = new ProjectClass(record.toJSON());
+            return project.toJSON();  // Return serialized version
+        });
     }
 
 
