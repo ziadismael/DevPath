@@ -7,7 +7,11 @@ class TeamClass {
         this._teamName = teamData.teamName;
         this._isPersonal = teamData.isPersonal;
         // Eager-loaded relations can be passed in constructor
-        this._members = teamData.Users ? teamData.Users.map(user => new UserClass(user.toJSON())) : [];
+        // Handle both Sequelize model instances (with toJSON) and plain objects
+        this._members = teamData.Users ? teamData.Users.map(user => {
+            const userData = typeof user.toJSON === 'function' ? user.toJSON() : user;
+            return new UserClass(userData);
+        }) : [];
     }
 
     // Serialize to JSON with proper field names for frontend
@@ -45,11 +49,7 @@ class TeamClass {
     // Finds a team by its primary key, including its members.
     static async findById(teamID) {
         const teamRecord = await models.Team.findByPk(teamID, {
-            include: {
-                model: models.User,
-                attributes: ['userID', 'username', 'firstName', 'lastName', 'email'],
-                through: { attributes: ['role'] }
-            }
+            include: { model: models.User, attributes: ['userID', 'username', 'email'] }
         });
         if (!teamRecord) return null;
         const team = new TeamClass(teamRecord.toJSON());
