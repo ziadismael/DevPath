@@ -1,6 +1,6 @@
 import TeamClass from '../classes/Team.class.js';
 import { UserClass } from '../classes/User.class.js';
-import {models} from '../models/index.models.js';
+import { models } from '../models/index.models.js';
 
 export const createTeam = async (req, res, next) => {
     try {
@@ -153,7 +153,7 @@ export const removeTeamMember = async (req, res, next) => {
         }
 
         const userToRemove = await UserClass.findById(req.params.userID);
-        const userRecord = await models.User.findByPk(req.params.teamID);
+        const userRecord = await models.User.findByPk(req.params.userID);  // Fixed: use userID not teamID
         if (!userToRemove) {
             const error = new Error('User to remove not found.');
             error.status = 404;
