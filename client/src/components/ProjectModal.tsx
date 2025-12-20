@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { projectsAPI } from '../api/projects';
 import { Project } from '../types';
+import { teamsAPI, TeamMember } from '../api/teams';
+import { usersAPI } from '../api/users';
+import { useAuth } from '../context/AuthContext';
 
 interface ProjectModalProps {
     isOpen: boolean;
@@ -17,6 +20,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     mode = 'create',
     project
 }) => {
+    const { user } = useAuth();
     const [formData, setFormData] = useState({
         projectName: '',
         description: '',
@@ -27,6 +31,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    // Team member management state
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     // Pre-fill form when in edit or view mode
     useEffect(() => {
@@ -52,11 +62,77 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         }
     }, [mode, project]);
 
+    // Load team members when in edit mode
+    useEffect(() => {
+        if (mode === 'edit' && project?.Team?.Users) {
+            setTeamMembers(project.Team.Users);
+        } else {
+            setTeamMembers([]);
+        }
+    }, [mode, project]);
+
+    // Search for users
+    useEffect(() => {
+        const searchUsers = async () => {
+            if (searchQuery.trim().length < 2) {
+                setSearchResults([]);
+                return;
+            }
+
+            setIsSearching(true);
+            try {
+                const results = await usersAPI.searchUsers(searchQuery);
+                // Filter out current user and already added members
+                const filtered = results.filter(
+                    (u: any) =>
+                        u.username !== user?.username &&
+                        !teamMembers.some(m => m.username === u.username)
+                );
+                setSearchResults(filtered);
+            } catch (err) {
+                console.error('Error searching users:', err);
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        const debounce = setTimeout(searchUsers, 300);
+        return () => clearTimeout(debounce);
+    }, [searchQuery, teamMembers, user]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
         });
+    };
+
+    const handleAddMember = async (username: string, role: string = 'Contributor') => {
+        if (!project?.Team?.teamID) return;
+
+        try {
+            await teamsAPI.addTeamMember(project.Team.teamID, username, role);
+            // Refresh team members
+            const updatedTeam = await teamsAPI.getTeamById(project.Team.teamID);
+            setTeamMembers(updatedTeam.Users || []);
+            setSearchQuery('');
+            setSearchResults([]);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to add team member');
+        }
+    };
+
+    const handleRemoveMember = async (userID: string) => {
+        if (!project?.Team?.teamID) return;
+
+        try {
+            await teamsAPI.removeTeamMember(project.Team.teamID, userID);
+            // Update local state
+            setTeamMembers(teamMembers.filter(m => m.userID !== userID));
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to remove team member');
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -240,6 +316,80 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                         />
                         {!isReadOnly && <p className="mt-1 text-xs text-slate-500">Separate URLs with commas</p>}
                     </div>
+
+                    {/* Team Members Section (Edit Mode Only) */}
+                    {mode === 'edit' && project?.Team && (
+                        <div className="border-t border-white/10 pt-6 mt-6">
+                            <h3 className="text-lg font-mono font-bold text-white mb-4">Team Members</h3>
+
+                            {/* Current Team Members */}
+                            <div className="space-y-2 mb-4">
+                                {teamMembers.map((member) => (
+                                    <div key={member.userID} className="flex items-center justify-between p-3 glass rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-xs font-bold text-white">
+                                                {member.username[0].toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="font-mono text-sm text-white">@{member.username}</p>
+                                                <p className="text-xs text-slate-500">{member.TeamMember?.role || 'Member'}</p>
+                                            </div>
+                                        </div>
+                                        {member.TeamMember?.role !== 'Owner' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveMember(member.userID)}
+                                                className="px-3 py-1 text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Add Member Search */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-mono text-slate-400 mb-2">
+                                    Add Team Member
+                                </label>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search by username..."
+                                    className="w-full px-4 py-3 bg-void-900 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-electric-500 transition-colors"
+                                />
+
+                                {/* Search Results */}
+                                {searchResults.length > 0 && (
+                                    <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                                        {searchResults.map((searchUser: any) => (
+                                            <div key={searchUser.username} className="flex items-center justify-between p-2 glass rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyber-500 to-cyber-600 flex items-center justify-center text-xs font-bold text-white">
+                                                        {searchUser.username[0].toUpperCase()}
+                                                    </div>
+                                                    <span className="text-sm text-white">@{searchUser.username}</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAddMember(searchUser.username)}
+                                                    className="px-3 py-1 text-xs bg-electric-600/20 hover:bg-electric-600/30 text-electric-400 rounded-lg transition-colors"
+                                                >
+                                                    Add
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {isSearching && (
+                                    <p className="text-xs text-slate-500 mt-2">Searching...</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Buttons */}
                     <div className="flex gap-4 pt-4">

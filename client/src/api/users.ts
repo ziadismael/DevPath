@@ -41,4 +41,10 @@ export const usersAPI = {
         const response = await apiClient.get<any>('/users/profile');
         return response.data.following || [];
     },
+
+    // Search users by query
+    async searchUsers(query: string): Promise<User[]> {
+        const response = await apiClient.get<User[]>('/users', { params: { search: query } });
+        return response.data;
+    },
 };

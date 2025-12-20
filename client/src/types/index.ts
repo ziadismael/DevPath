@@ -73,10 +73,17 @@ export interface Project {
         lastName?: string;
     };
     Team?: {
+        teamID?: string;
+        teamName?: string;
+        isPersonal?: boolean;
         Users?: Array<{
+            userID: string;
             username: string;
             firstName?: string;
             lastName?: string;
+            TeamMember?: {
+                role: string;
+            };
         }>;
     };
 }
