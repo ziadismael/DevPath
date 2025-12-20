@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { projectsAPI } from '../api/projects';
 import { Project } from '../types';
+import ProjectModal from '../components/ProjectModal';
 
 const Projects: React.FC = () => {
     const { isAuthenticated, user } = useAuth();
@@ -16,6 +17,9 @@ const Projects: React.FC = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -63,8 +67,7 @@ const Projects: React.FC = () => {
         if (!isAuthenticated) {
             navigate('/login', { state: { from: { pathname: '/projects' } } });
         } else {
-            // TODO: Navigate to create project page or open modal
-            console.log('Create project');
+            setIsModalOpen(true);
         }
     };
 
@@ -317,6 +320,17 @@ const Projects: React.FC = () => {
                     </>
                 )}
             </div>
+
+            {/* Project Modal */}
+            <ProjectModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={() => {
+                    fetchProjects();
+                    setIsModalOpen(false);
+                }}
+                mode="create"
+            />
         </div>
     );
 };
