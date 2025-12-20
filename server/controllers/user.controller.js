@@ -1,16 +1,31 @@
 import bcrypt from 'bcrypt';
-import {models} from '../models/index.models.js';
+import { models } from '../models/index.models.js';
+import { Op } from 'sequelize';
 
 export const viewProfile = async (req, res, next) => {
     try {
-        const currentUser = req.user;
+        const currentUser = req.userRecord;
+
+        // Get followers and following with user details
+        const followers = await currentUser.getFollowers({
+            attributes: ['userID', 'username', 'firstName', 'lastName'],
+            joinTableAttributes: []
+        });
+
+        const following = await currentUser.getFollowing({
+            attributes: ['userID', 'username', 'firstName', 'lastName'],
+            joinTableAttributes: []
+        });
 
         res.status(200).json({
-            username: currentUser.getUsername(),
+            userID: currentUser.userID,
+            username: currentUser.username,
             firstName: currentUser.firstName,
             lastName: currentUser.lastName,
-            posts: currentUser.posts,
-            projects: await currentUser.getProjects()
+            email: currentUser.email,
+            role: currentUser.role,
+            followers: followers || [],
+            following: following || []
         });
     }
     catch (error) {
@@ -55,11 +70,24 @@ export const updateProfile = async (req, res, next) => {
 
 export const getAllUsers = async (req, res, next) => {
     try {
-        const usersList = await models.User.findAll();
+        const { search } = req.query;
 
-        res.status(200).json({
-            usersList,
+        let whereClause = {};
+        if (search) {
+            whereClause = {
+                username: {
+                    [Op.iLike]: `%${search}%`
+                }
+            };
+        }
+
+        const usersList = await models.User.findAll({
+            where: whereClause,
+            attributes: ['userID', 'username', 'firstName', 'lastName'],
+            limit: 10
         });
+
+        res.status(200).json(usersList);
     }
     catch (error) {
         next(error);
