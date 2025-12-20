@@ -76,12 +76,17 @@ class TeamClass {
     }
 
     async removeMember(user, userRecord) {
-        const teamRecord = await models.Team.findByPk(this._teamID);
-        if (!user || !teamRecord) {
-            throw new Error("Cannot add user: userID / teamID is invalid.");
+        if (!user || !userRecord) {
+            throw new Error("Cannot remove user: user is invalid.");
         }
-        await teamRecord.removeUser(userRecord);
-    };
+        // Remove the team member association directly
+        await models.TeamMember.destroy({
+            where: {
+                teamID: this._teamID,
+                userID: userRecord.userID
+            }
+        });
+    }
 
 
     async isOwner(user) {
