@@ -9,6 +9,8 @@ export interface User {
     university?: string;
     country?: string;
     role: 'User' | 'Admin';
+    followers?: User[];
+    following?: User[];
 }
 
 // Auth types
@@ -93,9 +95,11 @@ export interface CreateProjectRequest {
 export interface Post {
     postID?: string;
     id?: number;
+    userID?: string;
     title: string;
     bodyText: string;
     mediaURL?: string;
+    likes?: number;
     createdAt?: string;
     updatedAt?: string;
     user?: {
@@ -103,8 +107,14 @@ export interface Post {
         firstName?: string;
         lastName?: string;
     };
-    likes?: number;
+    User?: {
+        username: string;
+        firstName?: string;
+        lastName?: string;
+    };
     comments?: Comment[];
+    Comments?: Comment[];
+    likedByCurrentUser?: boolean;
 }
 
 export interface CreatePostRequest {

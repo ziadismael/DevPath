@@ -29,4 +29,16 @@ export const usersAPI = {
     async unfollowUser(username: string): Promise<void> {
         await apiClient.delete(`/users/${username}/unfollow`);
     },
+
+    // Get followers list
+    async getFollowers(): Promise<User[]> {
+        const response = await apiClient.get<any>('/users/profile');
+        return response.data.followers || [];
+    },
+
+    // Get following list
+    async getFollowing(): Promise<User[]> {
+        const response = await apiClient.get<any>('/users/profile');
+        return response.data.following || [];
+    },
 };
