@@ -45,10 +45,11 @@ export const readPost = async (req, res, next) => {
     }
 };
 
-// Corresponds to: postRouter.get('/', authorize, authorizeAdmin, getAllPosts);
+// Corresponds to: postRouter.get('/', authorize, getAllPosts);
 export const getAllPosts = async (req, res, next) => {
     try {
-        const posts = await PostClass.findAll();
+        const currentUserID = req.userRecord?.userID || null;
+        const posts = await PostClass.findAll(currentUserID);
         res.status(200).json({ success: true, count: posts.length, data: posts });
     } catch (error) {
         next(error);
@@ -74,7 +75,7 @@ export const editPost = async (req, res, next) => {
             throw error;
         }
 
-        const {title, bodyText, mediaURL} = req.body;
+        const { title, bodyText, mediaURL } = req.body;
         post.title = title;
         post.bodyText = bodyText;
         post.mediaURL = mediaURL || post.mediaURL;

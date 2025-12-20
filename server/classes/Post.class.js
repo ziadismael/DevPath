@@ -1,4 +1,4 @@
-import {models} from "../models/index.models.js";
+import { models } from "../models/index.models.js";
 import { Op } from 'sequelize';
 
 class PostClass {
@@ -8,28 +8,71 @@ class PostClass {
         this._title = postData.title;
         this._bodyText = postData.bodyText;
         this._mediaURL = postData.mediaURL || null;
+        this._likes = postData.likes || 0;
         this._createdAt = postData.createdAt;
         this._updatedAt = postData.updatedAt;
 
+        // Eager-load user/author if provided
+        this._user = postData.User || null;
+
         // Eager-load comments if they are provided
         this._comments = postData.Comments ? postData.Comments : [];
+
+        // Track if current user liked this post
+        this._likedByCurrentUser = postData.likedByCurrentUser || false;
     }
 
     static async findById(postID) {
         const postRecord = await models.Post.findByPk(postID, {
-            include: {
+            include: [{
                 model: models.Comment,
                 order: [['createdAt', 'ASC']], // Order comments from oldest to newest
-            }
+                include: {
+                    model: models.User,
+                    attributes: ['userID', 'username', 'firstName', 'lastName']
+                }
+            }, {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName']
+            }]
         });
         return postRecord ? new PostClass(postRecord.toJSON()) : null;
     }
 
-    static async findAll() {
+    static async findAll(currentUserID = null) {
         const postRecords = await models.Post.findAll({
             order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: models.User,
+                    attributes: ['userID', 'username', 'firstName', 'lastName']
+                },
+                {
+                    model: models.Comment,
+                    include: {
+                        model: models.User,
+                        attributes: ['userID', 'username', 'firstName', 'lastName']
+                    }
+                },
+                {
+                    model: models.User,
+                    as: 'LikedByUsers',
+                    attributes: ['userID'],
+                    through: { attributes: [] }
+                }
+            ]
         });
-        return postRecords.map(record => new PostClass(record.toJSON()));
+
+        return postRecords.map(record => {
+            const postData = record.toJSON();
+            // Check if current user liked this post
+            if (currentUserID && postData.LikedByUsers) {
+                postData.likedByCurrentUser = postData.LikedByUsers.some(
+                    user => user.userID === currentUserID
+                );
+            }
+            return new PostClass(postData);
+        });
     }
 
     static async findForUserFeed(user) {
@@ -48,6 +91,19 @@ class PostClass {
                 }
             },
             order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: models.User,
+                    attributes: ['userID', 'username', 'firstName', 'lastName']
+                },
+                {
+                    model: models.Comment,
+                    include: {
+                        model: models.User,
+                        attributes: ['userID', 'username', 'firstName', 'lastName']
+                    }
+                }
+            ]
         });
 
         return postRecords.map(record => new PostClass(record.toJSON()));
@@ -89,7 +145,7 @@ class PostClass {
     }
 
     isAuthor(userRecord) {
-        return (this._userID === userRecord.userID)&&(userRecord.role !== "Admin");
+        return (this._userID === userRecord.userID) && (userRecord.role !== "Admin");
     }
 
     set title(value) {
@@ -113,6 +169,24 @@ class PostClass {
     get mediaURL() { return this._mediaURL; }
     set mediaURL(value) { this._mediaURL.push(value); }
     get comments() { return this._comments; }
+    get user() { return this._user; }
+
+    // Serialize for JSON responses - remove underscore prefixes
+    toJSON() {
+        return {
+            postID: this._postID,
+            userID: this._userID,
+            title: this._title,
+            bodyText: this._bodyText,
+            mediaURL: this._mediaURL,
+            likes: this._likes,
+            createdAt: this._createdAt,
+            updatedAt: this._updatedAt,
+            User: this._user,
+            Comments: this._comments,
+            likedByCurrentUser: this._likedByCurrentUser
+        };
+    }
 }
 
 export default PostClass;

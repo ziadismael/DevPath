@@ -1,8 +1,8 @@
-import {DataTypes} from 'sequelize';
-import {sequelize} from '../../database/postgres.js';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../../database/postgres.js';
 
 const Post = sequelize.define('Post', {
-    postID:{
+    postID: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
@@ -15,11 +15,16 @@ const Post = sequelize.define('Post', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    likes: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+    },
     mediaURL: {
         type: DataTypes.STRING,
         allowNull: true,
     }
-    },
+},
     {
         timestamps: true,
     });
