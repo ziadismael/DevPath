@@ -115,6 +115,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             await teamsAPI.addTeamMember(project.Team.teamID, username, role);
             // Refresh team members
             const updatedTeam = await teamsAPI.getTeamById(project.Team.teamID);
+            console.log('Updated team:', updatedTeam);
+            console.log('Users array:', updatedTeam.Users);
             setTeamMembers(updatedTeam.Users || []);
             setSearchQuery('');
             setSearchResults([]);
