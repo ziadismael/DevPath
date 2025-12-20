@@ -1,4 +1,5 @@
 import ProjectClass from '../classes/Project.class.js';
+import { models } from '../models/index.models.js';
 
 export const createProject = async (req, res, next) => {
     try {
@@ -23,7 +24,35 @@ export const getAllProjects = async (req, res, next) => {
     try {
         const projects = await ProjectClass.findAll();
         res.status(200).json({
-            message: `Fetched ${projects.count}`,
+            message: `Fetched ${projects.length} projects`,
+            data: projects,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getMyProjects = async (req, res, next) => {
+    try {
+        // Get all projects where the current user is a team member
+        const projectRecords = await models.Project.findAll({
+            order: [['createdAt', 'DESC']],
+            include: {
+                model: models.Team,
+                required: true,
+                include: {
+                    model: models.User,
+                    where: { userID: req.user.userID },
+                    attributes: ['userID', 'username'],
+                    through: { attributes: [] }
+                }
+            }
+        });
+
+        const projects = projectRecords.map(record => new ProjectClass(record.toJSON()));
+
+        res.status(200).json({
+            message: `Fetched ${projects.length} user projects`,
             data: projects,
         });
     } catch (error) {

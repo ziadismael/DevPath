@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Internships from './pages/Internships';
 import AIInterview from './pages/AIInterview';
 import Projects from './pages/Projects';
+import ProjectDetails from './pages/ProjectDetails';
 import Community from './pages/Community';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -22,6 +23,7 @@ const App: React.FC = () => {
                         <Route path="/internships" element={<Internships />} />
                         <Route path="/interview" element={<AIInterview />} />
                         <Route path="/projects" element={<Projects />} />
+                        <Route path="/projects/:id" element={<ProjectDetails />} />
                         <Route path="/community" element={<Community />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />

@@ -4,14 +4,26 @@ import { Project } from '../types';
 export const projectsAPI = {
     // Get all projects
     async getProjects(): Promise<Project[]> {
-        const response = await apiClient.get<Project[]>('/projects');
-        return response.data;
+        const response = await apiClient.get<any>('/projects');
+        return response.data.data || response.data || [];
     },
 
     // Get single project by ID
-    async getProject(id: number): Promise<Project> {
-        const response = await apiClient.get<Project>(`/projects/${id}`);
-        return response.data;
+    async getProject(id: number | string): Promise<Project> {
+        const response = await apiClient.get<any>(`/projects/${id}`);
+        return response.data.data || response.data;
+    },
+
+    // Get projects where current user is a team member
+    async getMyProjects(): Promise<Project[]> {
+        const response = await apiClient.get<any>('/projects/my/projects');
+        return response.data.data || response.data || [];
+    },
+
+    // Get community projects (all projects, can be filtered on frontend)
+    async getCommunityProjects(): Promise<Project[]> {
+        const response = await apiClient.get<any>('/projects');
+        return response.data.data || response.data || [];
     },
 
     // Create new project (requires authentication)
