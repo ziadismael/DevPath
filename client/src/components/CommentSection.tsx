@@ -40,14 +40,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postID, comments, onCom
                         <div key={comment.commentID || comment.id} className="flex gap-3">
                             {/* Avatar */}
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                                {comment.user?.username?.[0]?.toUpperCase() || 'U'}
+                                {comment.User?.username?.[0]?.toUpperCase() || comment.user?.username?.[0]?.toUpperCase() || 'U'}
                             </div>
 
                             {/* Comment Content */}
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="text-sm font-mono font-semibold text-white">
-                                        @{comment.user?.username || 'anonymous'}
+                                        @{comment.User?.username || comment.user?.username || 'anonymous'}
                                     </span>
                                 </div>
                                 <p className="text-sm text-slate-300">{comment.text}</p>

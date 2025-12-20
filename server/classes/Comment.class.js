@@ -9,6 +9,9 @@ class CommentClass {
         this._mediaURL = commentData.mediaURL || null;
         this._createdAt = commentData.createdAt;
         this._updatedAt = commentData.updatedAt;
+
+        // Eager-load user if provided
+        this._user = commentData.User || null;
     }
 
     /**
@@ -25,7 +28,16 @@ class CommentClass {
             userID: userRecord.userID,
             postID: postID,
         });
-        return new CommentClass(newCommentRecord.toJSON());
+
+        // Fetch the comment with user data
+        const commentWithUser = await models.Comment.findByPk(newCommentRecord.commentID, {
+            include: {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName']
+            }
+        });
+
+        return new CommentClass(commentWithUser.toJSON());
     }
 
     /**
@@ -33,7 +45,12 @@ class CommentClass {
      * @param {string} commentID - The UUID of the comment.
      */
     static async findById(commentID) {
-        const commentRecord = await models.Comment.findByPk(commentID);
+        const commentRecord = await models.Comment.findByPk(commentID, {
+            include: {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName']
+            }
+        });
         return commentRecord ? new CommentClass(commentRecord.toJSON()) : null;
     }
 
@@ -51,6 +68,21 @@ class CommentClass {
      */
     isAuthor(userRecord) {
         return this._userID === userRecord.userID;
+    }
+
+    // Serialize for JSON responses
+    toJSON() {
+        return {
+            commentID: this._commentID,
+            userID: this._userID,
+            postID: this._postID,
+            text: this._text,
+            mediaURL: this._mediaURL,
+            createdAt: this._createdAt,
+            updatedAt: this._updatedAt,
+            User: this._user,
+            user: this._user  // Include both for compatibility
+        };
     }
 }
 

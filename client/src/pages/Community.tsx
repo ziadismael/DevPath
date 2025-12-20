@@ -19,12 +19,58 @@ const Community: React.FC = () => {
 
     useEffect(() => {
         fetchPosts();
-    }, []);
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        // Set dynamic page title
+        if (isAuthenticated) {
+            document.title = 'Community | DevPath';
+        } else {
+            document.title = 'DevPath | Empower Your Developer Journey';
+        }
+    }, [isAuthenticated]);
 
     const fetchPosts = async () => {
         try {
             setIsLoading(true);
             setError('');
+
+            // If not authenticated, show mock posts instead of making API call
+            if (!isAuthenticated) {
+                const mockPosts: Post[] = [
+                    {
+                        postID: 'mock-1',
+                        title: 'Welcome to DevPath Community!',
+                        bodyText: 'Join our community to connect with developers, share your projects, and learn together. Sign in to see real posts and start engaging!',
+                        User: { username: 'devpath', firstName: 'DevPath', lastName: 'Team', email: '', role: 'User' },
+                        likes: 42,
+                        Comments: [],
+                        createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                    },
+                    {
+                        postID: 'mock-2',
+                        title: 'Share Your Projects',
+                        bodyText: 'Our community loves seeing what you\'re building! Share your latest projects, get feedback, and inspire others.',
+                        User: { username: 'community', firstName: 'Community', lastName: 'Manager', email: '', role: 'User' },
+                        likes: 28,
+                        Comments: [],
+                        createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+                    },
+                    {
+                        postID: 'mock-3',
+                        title: 'Learning Resources',
+                        bodyText: 'Check out our curated list of learning resources. From beginner tutorials to advanced topics, we\'ve got you covered!',
+                        User: { username: 'educator', firstName: 'Learning', lastName: 'Hub', email: '', role: 'User' },
+                        likes: 35,
+                        Comments: [],
+                        createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+                    },
+                ];
+                setPosts(mockPosts);
+                setIsLoading(false);
+                return;
+            }
+
             // Use getPosts() for global feed (all posts)
             const response = await communityAPI.getPosts();
             const data = Array.isArray(response) ? response : (response.posts || response.data || []);
@@ -32,14 +78,23 @@ const Community: React.FC = () => {
             setPosts(data);
         } catch (err: any) {
             console.error('Error fetching posts:', err);
-            setError(err.message || 'Failed to load posts');
-            setPosts([]);
+            // Don't show error for 401 when not authenticated
+            if (err.response?.status === 401 && !isAuthenticated) {
+                setPosts([]);
+            } else {
+                setError(err.message || 'Failed to load posts');
+                setPosts([]);
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     const handlePostClick = (post: Post) => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: { pathname: '/community' } } });
+            return;
+        }
         setSelectedPost(post);
         setIsPostDetailOpen(true);
     };
@@ -49,6 +104,27 @@ const Community: React.FC = () => {
             navigate('/login', { state: { from: { pathname: '/community' } } });
         } else {
             setIsModalOpen(true);
+        }
+    };
+
+    const handlePostCreated = () => {
+        setIsModalOpen(false);
+        fetchPosts(); // Refresh posts after creating new post
+    };
+
+    const handlePostUpdated = async () => {
+        // Refetch posts to get updated like counts and comments
+        await fetchPosts();
+        // Update the selected post with fresh data
+        if (selectedPost) {
+            const response = await communityAPI.getPosts();
+            const data = Array.isArray(response) ? response : (response.posts || response.data || []);
+            const updatedPost = data.find((p: Post) =>
+                (p.postID || p.id) === (selectedPost.postID || selectedPost.id)
+            );
+            if (updatedPost) {
+                setSelectedPost(updatedPost);
+            }
         }
     };
 
@@ -97,6 +173,25 @@ const Community: React.FC = () => {
                     )}
                 </div>
 
+                {/* Preview Mode Banner for Unauthenticated Users */}
+                {!isAuthenticated && (
+                    <div className="mb-8 p-6 glass rounded-xl border border-electric-500/30">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-electric-600/20 flex items-center justify-center">
+                                <span className="text-2xl">🔒</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-mono font-semibold text-white mb-1">
+                                    Preview Mode
+                                </h3>
+                                <p className="text-sm text-slate-400">
+                                    Sign in to create posts, like, comment, and interact with the community
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Posts Feed */}
                 {isLoading ? (
                     <div className="flex justify-center items-center py-20">
@@ -141,11 +236,11 @@ const Community: React.FC = () => {
                                 {/* Post Header */}
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-lg font-bold text-white">
-                                        {post.user?.username?.[0]?.toUpperCase() || 'U'}
+                                        {post.User?.username?.[0]?.toUpperCase() || 'U'}
                                     </div>
                                     <div>
                                         <h4 className="font-mono font-semibold text-white">
-                                            @{post.user?.username || 'anonymous'}
+                                            @{post.User?.username || 'anonymous'}
                                         </h4>
                                         <p className="text-xs text-slate-500">
                                             {post.createdAt ? getTimeAgo(post.createdAt) : 'Recently'}
@@ -169,7 +264,7 @@ const Community: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-slate-500">
                                         <span>💬</span>
-                                        <span>{post.comments?.length || 0}</span>
+                                        <span>{post.Comments?.length || post.comments?.length || 0}</span>
                                     </div>
                                     <div className="ml-auto text-xs text-slate-600 group-hover:text-electric-400 transition-colors">
                                         Click to view details →
@@ -196,7 +291,7 @@ const Community: React.FC = () => {
                     setSelectedPost(null);
                 }}
                 post={selectedPost}
-                onPostUpdated={fetchPosts}
+                onPostUpdated={handlePostUpdated}
             />
         </div>
     );

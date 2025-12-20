@@ -1,5 +1,5 @@
 import { models } from "../models/index.models.js";
-import { UserClass } from "./user.class.js";
+import { UserClass } from "./User.class.js";
 
 class TeamClass {
     constructor(teamData) {
@@ -8,6 +8,16 @@ class TeamClass {
         this._isPersonal = teamData.isPersonal;
         // Eager-loaded relations can be passed in constructor
         this._members = teamData.Users ? teamData.Users.map(user => new UserClass(user.toJSON())) : [];
+    }
+
+    // Serialize to JSON with proper field names for frontend
+    toJSON() {
+        return {
+            teamID: this._teamID,
+            teamName: this._teamName,
+            isPersonal: this._isPersonal,
+            Users: this._members  // Map _members to Users for frontend compatibility
+        };
     }
 
     static async create(teamData, user, userRecord) {
@@ -32,15 +42,21 @@ class TeamClass {
         await models.Team.destroy({ where: { teamID: this._teamID } });
     }
 
-     // Finds a team by its primary key, including its members.
+    // Finds a team by its primary key, including its members.
     static async findById(teamID) {
         const teamRecord = await models.Team.findByPk(teamID, {
-            include: { model: models.User, attributes: ['userID', 'username', 'email'] }
+            include: {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName', 'email'],
+                through: { attributes: ['role'] }
+            }
         });
-        return teamRecord ? new TeamClass(teamRecord) : null;
+        if (!teamRecord) return null;
+        const team = new TeamClass(teamRecord.toJSON());
+        return team.toJSON();  // Return serialized version
     }
 
-     // Finds all teams that a specific user is a member of.
+    // Finds all teams that a specific user is a member of.
     static async findForUser(user) {
         const teams = await user.getTeams({
             joinTableAttributes: ['role'], // Include the role from the TeamMember table
@@ -60,12 +76,17 @@ class TeamClass {
     }
 
     async removeMember(user, userRecord) {
-        const teamRecord = await models.Team.findByPk(this._teamID);
-        if (!user || !teamRecord) {
-            throw new Error("Cannot add user: userID / teamID is invalid.");
+        if (!user || !userRecord) {
+            throw new Error("Cannot remove user: user is invalid.");
         }
-        await teamRecord.removeUser(userRecord);
-    };
+        // Remove the team member association directly
+        await models.TeamMember.destroy({
+            where: {
+                teamID: this._teamID,
+                userID: userRecord.userID
+            }
+        });
+    }
 
 
     async isOwner(user) {
@@ -81,14 +102,14 @@ class TeamClass {
         return !!memberRecord;
     }
 
-    async assignProject(projectInstance){
+    async assignProject(projectInstance) {
         await projectInstance.setTeam(this._teamID);
         await projectInstance.saveUpdates();
         this._projects.push(projectInstance);
     }
 
     setTeamName(teamName) {
-        if (typeof(teamName) !== "string") {
+        if (typeof (teamName) !== "string") {
             throw new Error("Team name must be a string");
         }
         this._teamName = teamName;
