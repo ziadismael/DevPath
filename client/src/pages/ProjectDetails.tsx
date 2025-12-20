@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { projectsAPI } from '../api/projects';
 import { Project } from '../types';
 import { useAuth } from '../context/AuthContext';
+import ProjectModal from '../components/ProjectModal';
 
 const ProjectDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -12,6 +13,7 @@ const ProjectDetails: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [isTeamMember, setIsTeamMember] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         // Set dynamic page title
@@ -51,10 +53,12 @@ const ProjectDetails: React.FC = () => {
     };
 
     const handleEdit = () => {
-        // Navigate to edit page or open edit modal
-        // For now, we'll just log
-        console.log('Edit project:', project?.projectID);
-        // TODO: Implement edit functionality
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSuccess = () => {
+        fetchProject();  // Refresh project data after edit
+        setIsEditModalOpen(false);
     };
 
     if (isLoading) {
@@ -216,6 +220,17 @@ const ProjectDetails: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Edit Project Modal */}
+            {project && (
+                <ProjectModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    onSuccess={handleEditSuccess}
+                    mode="edit"
+                    project={project}
+                />
+            )}
         </div>
     );
 };
