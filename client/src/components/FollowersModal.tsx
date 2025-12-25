@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { usersAPI } from '../api/users';
-import { useState } from 'react';
 
 interface FollowersModalProps {
     isOpen: boolean;
@@ -11,6 +10,7 @@ interface FollowersModalProps {
     currentUsername?: string;
     onFollowChange: () => void;
     onUserRemoved?: (username: string) => void;
+    initialFollowingUsernames?: Set<string>;
 }
 
 const FollowersModal: React.FC<FollowersModalProps> = ({
@@ -20,10 +20,16 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
     users,
     currentUsername,
     onFollowChange,
-    onUserRemoved
+    onUserRemoved,
+    initialFollowingUsernames = new Set()
 }) => {
-    const [followingUsernames, setFollowingUsernames] = useState<Set<string>>(new Set());
+    const [followingUsernames, setFollowingUsernames] = useState<Set<string>>(initialFollowingUsernames);
     const [processingUsernames, setProcessingUsernames] = useState<Set<string>>(new Set());
+
+    // Update followingUsernames when initialFollowingUsernames changes
+    useEffect(() => {
+        setFollowingUsernames(new Set(initialFollowingUsernames));
+    }, [initialFollowingUsernames]);
 
     if (!isOpen) return null;
 
@@ -54,8 +60,9 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
                 return newSet;
             });
             onFollowChange();
-            // Remove user from modal list in real-time
-            if (onUserRemoved) {
+            // Only remove user from modal list if we're in the "Following" modal
+            // In "Followers" modal, they're still our follower even if we unfollow them
+            if (mode === 'following' && onUserRemoved) {
                 onUserRemoved(username);
             }
         } catch (err) {
@@ -130,8 +137,8 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
                                             }}
                                             disabled={processingUsernames.has(user.username)}
                                             className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all duration-300 disabled:opacity-50 ${mode === 'following' || followingUsernames.has(user.username)
-                                                    ? 'bg-slate-700 hover:bg-slate-600 text-white'
-                                                    : 'bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 text-white'
+                                                ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                                                : 'bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 text-white'
                                                 }`}
                                         >
                                             {mode === 'following' ? 'Unfollow' : (followingUsernames.has(user.username) ? 'Following' : 'Follow')}
