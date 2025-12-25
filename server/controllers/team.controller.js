@@ -102,29 +102,39 @@ export const deleteTeam = async (req, res, next) => {
 
 export const addTeamMember = async (req, res, next) => {
     try {
-        const team = await TeamClass.findById(req.params.teamID);
-        if (!team) {
+        // Fetch raw team record (not serialized) for authorization
+        const teamRecord = await models.Team.findByPk(req.params.teamID, {
+            include: {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName', 'email'],
+                through: { attributes: ['role'] }
+            }
+        });
+
+        if (!teamRecord) {
             const error = new Error('Team not found');
             error.status = 404;
             throw error;
         }
 
-        const isAuthorized = await team.isOwner(req.userRecord);
+        // Create TeamClass instance for authorization check
+        const team = new TeamClass(teamRecord.toJSON());
+
+        const isAuthorized = await team.isOwner(req.user);
         if (!isAuthorized) {
             const error = new Error('Only team owners can add members.');
-            console.log(await team.getMembers());
             error.status = 403;
             throw error;
         }
 
         const userToAdd = await UserClass.findByUsername(req.body.username);
-        const userRecord = await models.User.findByPk(userToAdd.userID);
         if (!userToAdd) {
             const error = new Error('User to add not found.');
             error.status = 404;
             throw error;
         }
 
+        const userRecord = await models.User.findByPk(userToAdd.userID);
         await team.addMember(userToAdd, userRecord, req.body.role);
 
         res.status(200).json({

@@ -4,6 +4,7 @@ import { projectsAPI } from '../api/projects';
 import { Project } from '../types';
 import { useAuth } from '../context/AuthContext';
 import ProjectModal from '../components/ProjectModal';
+import ImageSlider from '../components/ImageSlider';
 
 const ProjectDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -219,6 +220,16 @@ const ProjectDetails: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+
+                {/* Screenshots */}
+                {project.screenshots && project.screenshots.length > 0 && (
+                    <div className="glass rounded-xl p-6 mb-6">
+                        <h2 className="text-xl font-mono font-bold text-white mb-4">Screenshots</h2>
+                        <ImageSlider images={project.screenshots} autoHeight={true} />
+                    </div>
+                )}
+                
             </div>
 
             {/* Edit Project Modal */}

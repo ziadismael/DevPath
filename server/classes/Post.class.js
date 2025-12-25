@@ -123,7 +123,7 @@ class PostClass {
         const currentPost = await models.Post.findByPk(this._postID);
 
         currentPost.title = this._title;
-        currentPost.bodyText = this._body;
+        currentPost.bodyText = this._bodyText;
         currentPost.mediaURL = this._mediaURL;
         currentPost.updatedAt = this._updatedAt;
         currentPost.userID = this._userID;
@@ -167,7 +167,7 @@ class PostClass {
     get title() { return this._title; }
     get body() { return this._body; }
     get mediaURL() { return this._mediaURL; }
-    set mediaURL(value) { this._mediaURL.push(value); }
+    set mediaURL(value) { this._mediaURL = value; }
     get comments() { return this._comments; }
     get user() { return this._user; }
 

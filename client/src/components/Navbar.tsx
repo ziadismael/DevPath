@@ -25,10 +25,10 @@ const Navbar: React.FC = () => {
                     {/* Navigation Links */}
                     <div className="hidden md:flex items-center space-x-8">
                         <Link
-                            to="/internships"
+                            to="/opportunities"
                             className="text-slate-300 hover:text-electric-500 transition-colors duration-200 font-medium"
                         >
-                            Internships
+                            Opportunities
                         </Link>
                         <Link
                             to="/interview"
@@ -68,11 +68,11 @@ const Navbar: React.FC = () => {
 
                                 {/* Dropdown Menu */}
                                 {showUserMenu && (
-                                    <div className="absolute right-0 mt-2 w-48 glass rounded-lg shadow-glow-md border border-white/10 py-2">
+                                    <div className="absolute right-0 mt-2 w-48 bg-void-900/95 backdrop-blur-lg rounded-lg shadow-glow-md border border-white/10 py-2">
                                         <div className="px-4 py-2 border-b border-white/10">
                                             <p className="text-sm font-mono text-slate-400">Signed in as</p>
                                             <p className="text-sm font-semibold text-white truncate">{user?.username}</p>
-                                        </div>
+                                        </div>  
                                         <Link
                                             to="/profile"
                                             className="block px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"

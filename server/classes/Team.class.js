@@ -8,9 +8,13 @@ class TeamClass {
         this._isPersonal = teamData.isPersonal;
         // Eager-loaded relations can be passed in constructor
         // Handle both Sequelize model instances (with toJSON) and plain objects
+        // Preserve TeamMember role data from the join table
         this._members = teamData.Users ? teamData.Users.map(user => {
             const userData = typeof user.toJSON === 'function' ? user.toJSON() : user;
-            return new UserClass(userData);
+            const userInstance = new UserClass(userData);
+            // Store the TeamMember role if present
+            userInstance._teamMemberRole = userData.TeamMember?.role;
+            return userInstance;
         }) : [];
     }
 
@@ -20,7 +24,15 @@ class TeamClass {
             teamID: this._teamID,
             teamName: this._teamName,
             isPersonal: this._isPersonal,
-            Users: this._members  // Map _members to Users for frontend compatibility
+            // Serialize UserClass instances to plain objects
+            Users: this._members.map(member => ({
+                userID: member.userID,
+                username: member.getUsername(),
+                firstName: member.firstName,
+                lastName: member.lastName,
+                email: member.getEmail(),
+                TeamMember: member._teamMemberRole ? { role: member._teamMemberRole } : undefined
+            }))
         };
     }
 
@@ -49,7 +61,11 @@ class TeamClass {
     // Finds a team by its primary key, including its members.
     static async findById(teamID) {
         const teamRecord = await models.Team.findByPk(teamID, {
-            include: { model: models.User, attributes: ['userID', 'username', 'email'] }
+            include: {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName', 'email'],
+                through: { attributes: ['role'] }
+            }
         });
         if (!teamRecord) return null;
         const team = new TeamClass(teamRecord.toJSON());

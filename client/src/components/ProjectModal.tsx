@@ -4,6 +4,7 @@ import { Project } from '../types';
 import { teamsAPI, TeamMember } from '../api/teams';
 import { usersAPI } from '../api/users';
 import { useAuth } from '../context/AuthContext';
+import ImageUpload from './ImageUpload';
 
 interface ProjectModalProps {
     isOpen: boolean;
@@ -27,7 +28,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         techStack: '',
         gitHubRepo: '',
         liveDemoURL: '',
-        screenshots: '',
+        screenshots: [] as string[],
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -47,7 +48,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 techStack: project.techStack?.join(', ') || '',
                 gitHubRepo: project.gitHubRepo || '',
                 liveDemoURL: project.liveDemoURL || '',
-                screenshots: project.screenshots?.join(', ') || '',
+                screenshots: project.screenshots || [],
             });
         } else if (mode === 'create') {
             // Reset form for create mode
@@ -57,7 +58,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 techStack: '',
                 gitHubRepo: '',
                 liveDemoURL: '',
-                screenshots: '',
+                screenshots: [],
             });
         }
     }, [mode, project]);
@@ -149,18 +150,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 .map(item => item.trim())
                 .filter(item => item.length > 0);
 
-            const screenshotsArray = formData.screenshots
-                .split(',')
-                .map(item => item.trim())
-                .filter(item => item.length > 0);
-
             const projectData = {
                 projectName: formData.projectName,
                 description: formData.description,
                 techStack: techStackArray.length > 0 ? techStackArray : undefined,
                 gitHubRepo: formData.gitHubRepo || undefined,
                 liveDemoURL: formData.liveDemoURL || undefined,
-                screenshots: screenshotsArray.length > 0 ? screenshotsArray : undefined,
+                screenshots: formData.screenshots.length > 0 ? formData.screenshots : undefined,
             };
 
             if (mode === 'edit' && project?.projectID) {
@@ -176,7 +172,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 techStack: '',
                 gitHubRepo: '',
                 liveDemoURL: '',
-                screenshots: '',
+                screenshots: [],
             });
             onSuccess();
             onClose();
@@ -303,21 +299,31 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                     </div>
 
                     {/* Screenshots */}
-                    <div>
-                        <label className="block text-sm font-mono text-slate-400 mb-2">
-                            Screenshot URLs
-                        </label>
-                        <input
-                            type="text"
-                            name="screenshots"
+                    {!isReadOnly && (
+                        <ImageUpload
                             value={formData.screenshots}
-                            onChange={handleChange}
-                            disabled={isReadOnly}
-                            className={`w-full px-4 py-3 bg-void-900 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-electric-500 transition-colors ${isReadOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
-                            placeholder="https://example.com/img1.png, https://example.com/img2.png"
+                            onChange={(value) => setFormData({ ...formData, screenshots: value as string[] })}
+                            multiple
+                            label="Project Screenshots (Optional)"
                         />
-                        {!isReadOnly && <p className="mt-1 text-xs text-slate-500">Separate URLs with commas</p>}
-                    </div>
+                    )}
+                    {isReadOnly && formData.screenshots.length > 0 && (
+                        <div>
+                            <label className="block text-sm font-mono text-slate-400 mb-2">
+                                Screenshots
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {formData.screenshots.map((img, index) => (
+                                    <img
+                                        key={index}
+                                        src={img}
+                                        alt={`Screenshot ${index + 1}`}
+                                        className="w-full h-32 object-cover rounded-lg border border-white/10"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Team Members Section (Edit Mode Only) */}
                     {mode === 'edit' && project?.Team && (

@@ -25,9 +25,19 @@ export const communityAPI = {
     async createPost(data: {
         title: string;
         bodyText: string;
-        mediaURL?: string;
+        mediaURL?: string[];
     }): Promise<Post> {
         const response = await apiClient.post<{ data: Post }>('/posts', data);
+        return response.data.data || response.data;
+    },
+
+    // Update existing post (requires authentication)
+    async updatePost(postID: string, data: {
+        title: string;
+        bodyText: string;
+        mediaURL?: string[];
+    }): Promise<Post> {
+        const response = await apiClient.put<{ data: Post }>(`/posts/${postID}`, data);
         return response.data.data || response.data;
     },
 
