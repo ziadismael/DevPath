@@ -1,21 +1,65 @@
-import {models} from "../models/index.models.js";
+import { models } from "../models/index.models.js";
 
 class ProjectClass {
     constructor(projectData) {
-        this._projectID = null;
+        this._projectID = projectData.projectID || null;
         this._projectName = projectData.projectName;
         this._githubRepo = projectData.gitHubRepo || null;
         this._teamID = projectData.teamID || null;
-        this._projectID = projectData.projectID || null;
         this.description = projectData.description || null;
         this.liveDemoURL = projectData.liveDemoURL || null;
         this.techStack = projectData.techStack || [];
         this.screenshots = projectData.screenshots || [];
+        this.Team = projectData.Team || null;
+        this.user = projectData.user || null;
+        this.createdAt = projectData.createdAt || null;
+        this.updatedAt = projectData.updatedAt || null;
+    }
+
+    // Serialize to JSON with proper field names for frontend
+    toJSON() {
+        // Extract user from Team if not directly available
+        let user = this.user;
+        if (!user && this.Team && this.Team.Users && this.Team.Users.length > 0) {
+            user = {
+                username: this.Team.Users[0].username,
+                firstName: this.Team.Users[0].firstName,
+                lastName: this.Team.Users[0].lastName,
+                userID: this.Team.Users[0].userID
+            };
+        }
+
+        return {
+            projectID: this._projectID,  // Use projectID without underscore
+            id: this._projectID,  // Also provide id for compatibility
+            projectName: this._projectName,
+            gitHubRepo: this._githubRepo,
+            teamID: this._teamID,
+            description: this.description,
+            liveDemoURL: this.liveDemoURL,
+            techStack: this.techStack,
+            screenshots: this.screenshots,
+            Team: this.Team,
+            user: user,  // Ensure user is populated
+            createdAt: this.createdAt,
+            updatedAt: this.updatedAt
+        };
     }
 
     static async findById(projectID) {
-        const projectRecord = await models.Project.findByPk(projectID);
-        return projectRecord ? new ProjectClass(projectRecord.toJSON()) : null;
+        const projectRecord = await models.Project.findByPk(projectID, {
+            include: {
+                model: models.Team,
+                include: {
+                    model: models.User,
+                    attributes: ['userID', 'username', 'firstName', 'lastName'],
+                    through: { attributes: ['role'] }
+                }
+            }
+        });
+        if (!projectRecord) return null;
+        const project = new ProjectClass(projectRecord.toJSON());
+        return project.toJSON();  // Return serialized version
     }
 
     static async findAll() {
@@ -25,16 +69,20 @@ class ProjectClass {
                 model: models.Team,
                 include: {
                     model: models.User,
-                    attributes: ['userID', 'username']
+                    attributes: ['userID', 'username', 'firstName', 'lastName'],
+                    through: { attributes: ['role'] }
                 }
             }
         });
-        return projectRecords.map(record => new ProjectClass(record.toJSON()));
+        return projectRecords.map(record => {
+            const project = new ProjectClass(record.toJSON());
+            return project.toJSON();  // Return serialized version
+        });
     }
 
 
-     // * Creates a project for a specific, existing team.
-     // * Includes authorization to ensure the user is a member of the team.
+    // * Creates a project for a specific, existing team.
+    // * Includes authorization to ensure the user is a member of the team.
     static async createForTeam(projectData, user, userRecord) {
         if (!projectData.teamID) {
             throw new Error("A teamID must be provided to create a team project.");
@@ -57,8 +105,8 @@ class ProjectClass {
         return ProjectClass.#createRecord(projectData, team.teamID);
     }
 
-     // * Creates a project for a user's personal team.
-     // * It will find or create the personal team automatically.
+    // * Creates a project for a user's personal team.
+    // * It will find or create the personal team automatically.
     static async createPersonal(projectData, user, userRecord) {
         let personalTeam = await models.Team.findOne({
             where: { isPersonal: true },
@@ -94,7 +142,7 @@ class ProjectClass {
         return new ProjectClass(newProjectRecord.toJSON());
     }
 
-    async saveToDB(){
+    async saveToDB() {
         const newProject = await models.Project.create({
             teamID: this._teamID,
             projectName: this._projectName,
@@ -104,7 +152,7 @@ class ProjectClass {
             screenshots: this.screenshots,
             techStack: this.techStack,
         });
-        console.log("Project has been saved to DB: ",newProject);
+        console.log("Project has been saved to DB: ", newProject);
         this._projectID = newProject.projectID;
     }
 
@@ -146,7 +194,7 @@ class ProjectClass {
     }
 
     setProjectName(projectName) {
-        if (typeof projectName !== "string"){
+        if (typeof projectName !== "string") {
             throw new Error("Project name must be a string.");
         }
         this.projectName = projectName;
@@ -157,7 +205,7 @@ class ProjectClass {
     }
 
     setGitHubRepo(githubRepo) {
-        if (typeof githubRepo !== "string"){
+        if (typeof githubRepo !== "string") {
             throw new Error("GitHub repo must be a string.");
         }
         this._githubRepo = githubRepo;
@@ -167,7 +215,7 @@ class ProjectClass {
         return this._githubRepo;
     }
 
-    getProjectID(){
+    getProjectID() {
         return this._projectID;
     }
 
@@ -177,7 +225,7 @@ class ProjectClass {
 
     async setTeam(teamID) {
         const team = await models.Team.findByPk(teamID);
-        if (!team){
+        if (!team) {
             throw new Error("Cannot find team with the teamID: " + teamID);
         }
         this._teamID = teamID;

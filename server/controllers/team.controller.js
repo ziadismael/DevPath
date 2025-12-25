@@ -1,6 +1,6 @@
 import TeamClass from '../classes/Team.class.js';
 import { UserClass } from '../classes/User.class.js';
-import {models} from '../models/index.models.js';
+import { models } from '../models/index.models.js';
 
 export const createTeam = async (req, res, next) => {
     try {
@@ -138,12 +138,23 @@ export const addTeamMember = async (req, res, next) => {
 
 export const removeTeamMember = async (req, res, next) => {
     try {
-        const team = await TeamClass.findById(req.params.teamID);
-        if (!team) {
+        // Fetch raw team record (not serialized) for authorization
+        const teamRecord = await models.Team.findByPk(req.params.teamID, {
+            include: {
+                model: models.User,
+                attributes: ['userID', 'username', 'firstName', 'lastName', 'email'],
+                through: { attributes: ['role'] }
+            }
+        });
+
+        if (!teamRecord) {
             const error = new Error('Team not found');
             error.status = 404;
             throw error;
         }
+
+        // Create TeamClass instance for authorization check
+        const team = new TeamClass(teamRecord.toJSON());
 
         const isAuthorized = await team.isOwner(req.user);
         if (!isAuthorized) {
@@ -153,8 +164,10 @@ export const removeTeamMember = async (req, res, next) => {
         }
 
         const userToRemove = await UserClass.findById(req.params.userID);
-        const userRecord = await models.User.findByPk(req.params.teamID);
-        if (!userToRemove) {
+        const userRecord = await models.User.findByPk(req.params.userID);
+
+        // Check BOTH userToRemove AND userRecord for null
+        if (!userToRemove || !userRecord) {
             const error = new Error('User to remove not found.');
             error.status = 404;
             throw error;
