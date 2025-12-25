@@ -15,5 +15,8 @@
         "portfolio"
     ],
     "author": "",
-    "license": "ISC"
+    "license": "ISC",
+    "devDependencies": {
+        "concurrently": "^9.2.1"
+    }
 }

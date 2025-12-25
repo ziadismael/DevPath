@@ -25,10 +25,10 @@ const Navbar: React.FC = () => {
                     {/* Navigation Links */}
                     <div className="hidden md:flex items-center space-x-8">
                         <Link
-                            to="/internships"
+                            to="/opportunities"
                             className="text-slate-300 hover:text-electric-500 transition-colors duration-200 font-medium"
                         >
-                            Internships
+                            Opportunities
                         </Link>
                         <Link
                             to="/interview"
