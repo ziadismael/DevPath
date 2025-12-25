@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { communityAPI } from '../api/community';
+import ImageUpload from './ImageUpload';
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -11,7 +12,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
     const [formData, setFormData] = useState({
         title: '',
         bodyText: '',
-        mediaURL: '',
+        mediaURL: [] as string[],
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -39,7 +40,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
             setFormData({
                 title: '',
                 bodyText: '',
-                mediaURL: '',
+                mediaURL: [],
             });
             onSuccess();
             onClose();
@@ -110,20 +111,13 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
                         />
                     </div>
 
-                    {/* Media URL */}
-                    <div>
-                        <label className="block text-sm font-mono text-slate-400 mb-2">
-                            Media URL (Optional)
-                        </label>
-                        <input
-                            type="url"
-                            name="mediaURL"
-                            value={formData.mediaURL}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 bg-void-900 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-electric-500 transition-colors"
-                            placeholder="https://example.com/image.png"
-                        />
-                    </div>
+                    {/* Media Images */}
+                    <ImageUpload
+                        value={formData.mediaURL}
+                        onChange={(value) => setFormData({ ...formData, mediaURL: value as string[] })}
+                        label="Post Images (Optional)"
+                        multiple={true}
+                    />
 
                     {/* Buttons */}
                     <div className="flex gap-4 pt-4">

@@ -105,7 +105,7 @@ export interface Post {
     userID?: string;
     title: string;
     bodyText: string;
-    mediaURL?: string;
+    mediaURL?: string[];
     likes?: number;
     createdAt?: string;
     updatedAt?: string;

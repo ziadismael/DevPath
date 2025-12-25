@@ -78,11 +78,12 @@ export const editPost = async (req, res, next) => {
         const { title, bodyText, mediaURL } = req.body;
         post.title = title;
         post.bodyText = bodyText;
-        post.mediaURL = mediaURL || post.mediaURL;
+        post.mediaURL = mediaURL !== undefined ? mediaURL : post.mediaURL;
         await post.saveUpdates();
         const updatedPost = await PostClass.findById(postID); // Re-fetch to get latest data
         res.status(200).json({ success: true, message: 'Post updated successfully.', data: updatedPost });
     } catch (error) {
+        console.error('Error in editPost:', error);
         next(error);
     }
 };

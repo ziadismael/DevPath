@@ -198,7 +198,7 @@ const Home: React.FC = () => {
                                     <span className="font-mono text-sm">Create Post</span>
                                 </Link>
                                 <Link
-                                    to="/internships"
+                                    to="/opportunities"
                                     className="flex items-center gap-2 p-4 glass glass-hover rounded-lg text-white hover:text-syntax-pink transition-colors"
                                 >
                                     <span className="text-xl">🎯</span>

@@ -1,5 +1,5 @@
-import {DataTypes} from 'sequelize';
-import {sequelize} from '../../database/postgres.js';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../../database/postgres.js';
 
 const Comment = sequelize.define('Comment', {
     commentID: {
@@ -7,14 +7,14 @@ const Comment = sequelize.define('Comment', {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
     },
-    text:{
+    text: {
         type: DataTypes.TEXT,
     },
-    mediaURL:{
-        type: DataTypes.STRING,
+    mediaURL: {
+        type: DataTypes.TEXT,
         allowNull: true,
     }
-    },
+},
     {
         timestamps: false,
     });

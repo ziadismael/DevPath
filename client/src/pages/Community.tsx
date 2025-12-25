@@ -6,6 +6,7 @@ import { Post } from '../types';
 import CreatePostModal from '../components/CreatePostModal';
 import PostDetailModal from '../components/PostDetailModal';
 import UserStatsWidget from '../components/UserStatsWidget';
+import ImageSlider from '../components/ImageSlider';
 
 const Community: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -255,6 +256,13 @@ const Community: React.FC = () => {
                                 <p className="text-slate-400 mb-4 line-clamp-3">
                                     {post.bodyText}
                                 </p>
+
+                                {/* Post Image(s) */}
+                                {post.mediaURL && post.mediaURL.length > 0 && (
+                                    <div className="mb-4">
+                                        <ImageSlider images={post.mediaURL} />
+                                    </div>
+                                )}
 
                                 {/* Post Actions */}
                                 <div className="flex items-center gap-6 pt-4 border-t border-white/10">

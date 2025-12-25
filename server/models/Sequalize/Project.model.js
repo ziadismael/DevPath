@@ -1,8 +1,8 @@
-import {DataTypes} from 'sequelize';
-import {sequelize} from '../../database/postgres.js';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../../database/postgres.js';
 
 const Project = sequelize.define('Project', {
-    projectID:{
+    projectID: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
@@ -20,7 +20,7 @@ const Project = sequelize.define('Project', {
         allowNull: true,
         defaultValue: [],
     },
-    gitHubRepo:{
+    gitHubRepo: {
         type: DataTypes.STRING,
         validate: {
             isUrl: true,
@@ -34,13 +34,13 @@ const Project = sequelize.define('Project', {
         }
     },
     screenshots: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
+        type: DataTypes.ARRAY(DataTypes.TEXT),
         allowNull: true,
         defaultValue: [],
     },
 },
     {
- timestamps: true,
-});
+        timestamps: true,
+    });
 
 export default Project;

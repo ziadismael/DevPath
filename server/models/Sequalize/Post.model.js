@@ -21,8 +21,9 @@ const Post = sequelize.define('Post', {
         allowNull: false,
     },
     mediaURL: {
-        type: DataTypes.STRING,
+        type: DataTypes.ARRAY(DataTypes.TEXT),
         allowNull: true,
+        defaultValue: [],
     }
 },
     {
