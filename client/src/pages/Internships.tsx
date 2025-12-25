@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { internshipsAPI } from '../api/internships';
 import { Internship } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -6,7 +6,11 @@ import { useNavigate } from 'react-router-dom';
 
 const Internships: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedFilter, setSelectedFilter] = useState('all');
+    const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+    const [locationSearchInput, setLocationSearchInput] = useState('');
+    const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+    const locationButtonRef = useRef<HTMLDivElement>(null);
     const [internships, setInternships] = useState<Internship[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -51,26 +55,74 @@ const Internships: React.FC = () => {
             setInternships(mockInternships);
             setIsLoading(false);
         }
-    }, [selectedFilter, isAuthenticated]);
+    }, [isAuthenticated]);
 
     useEffect(() => {
         // Set dynamic page title
         if (isAuthenticated) {
-            document.title = 'Internships | DevPath';
+            document.title = 'Opportunities | DevPath';
         } else {
             document.title = 'DevPath | Empower Your Developer Journey';
         }
     }, [isAuthenticated]);
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            // Check if click is outside both the button container and the dropdown
+            if (!target.closest('.location-dropdown-container') &&
+                !target.closest('.location-dropdown-menu')) {
+                setIsLocationDropdownOpen(false);
+            }
+        };
+
+        if (isLocationDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isLocationDropdownOpen]);
+
+    // Update dropdown position when opened
+    useEffect(() => {
+        if (isLocationDropdownOpen && locationButtonRef.current) {
+            const rect = locationButtonRef.current.getBoundingClientRect();
+            setDropdownPosition({
+                top: rect.bottom, // Use viewport coordinates for fixed positioning
+                left: rect.left,
+                width: rect.width
+            });
+        }
+    }, [isLocationDropdownOpen]);
+
+    // Close dropdown on window scroll (not dropdown internal scroll)
+    useEffect(() => {
+        const handleScroll = (e: Event) => {
+            const target = e.target;
+            // Only close if scrolling the window/document, not the dropdown itself
+            if (target === document || target === window ||
+                (target instanceof HTMLElement && !target.closest('.location-dropdown-menu'))) {
+                setIsLocationDropdownOpen(false);
+            }
+        };
+
+        if (isLocationDropdownOpen) {
+            window.addEventListener('scroll', handleScroll, true);
+        }
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll, true);
+        };
+    }, [isLocationDropdownOpen]);
+
     const fetchInternships = async () => {
         try {
             setIsLoading(true);
             setError('');
-            const params: any = {};
-            if (selectedFilter !== 'all') {
-                params.location = selectedFilter;
-            }
-            const response = await internshipsAPI.getInternships(params);
+            const response = await internshipsAPI.getInternships();
             // Handle both array response and object with internships property
             const data = Array.isArray(response) ? response : (response.internships || response.data || []);
             console.log('Internships data:', data);
@@ -81,20 +133,6 @@ const Internships: React.FC = () => {
             setInternships([]); // Set empty array on error
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleApply = async (id: string | number) => {
-        if (!isAuthenticated) {
-            navigate('/login', { state: { from: { pathname: '/internships' } } });
-            return;
-        }
-
-        try {
-            await internshipsAPI.applyToInternship(id as number);
-            alert('Application submitted successfully!');
-        } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to submit application');
         }
     };
 
@@ -112,12 +150,66 @@ const Internships: React.FC = () => {
         setIsLoadingMore(false);
     };
 
-    const filteredInternships = internships.filter((internship) =>
-        searchTerm === '' ||
-        internship.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        internship.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        internship.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    // Extract unique countries from internships (last part after comma)
+    const extractCountry = (location: string): string => {
+        const parts = location.split(',').map(p => p.trim());
+        let country = parts[parts.length - 1]; // Get the last part (country)
+
+        // Normalize country names
+        const countryMap: { [key: string]: string } = {
+            'US': 'USA',
+            'United States': 'USA',
+            'U.S.': 'USA',
+            'U.S.A.': 'USA',
+            'Egypt': 'Egypt',
+            'Canada': 'Canada',
+            'UK': 'United Kingdom',
+            'U.K.': 'United Kingdom',
+        };
+
+        // US state codes to filter out
+        const usStateCodes = [
+            'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+            'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+            'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+            'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+            'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+        ];
+
+        // If it's a US state code, look for USA in earlier parts or default to USA
+        if (usStateCodes.includes(country)) {
+            return 'USA';
+        }
+
+        // Apply normalization
+        return countryMap[country] || country;
+    };
+
+    const availableLocations = Array.from(new Set(
+        internships
+            .map(i => i.location)
+            .filter((loc): loc is string => !!loc)
+            .map(extractCountry)
+    )).sort();
+
+    // Filter locations based on search input
+    const filteredLocations = availableLocations.filter(loc =>
+        loc.toLowerCase().includes(locationSearchInput.toLowerCase())
     );
+
+    const filteredInternships = internships.filter((internship) => {
+        // Search term filter (company, title, description)
+        const matchesSearch = searchTerm === '' ||
+            internship.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            internship.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            internship.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // Location multiselect filter (match by country)
+        const matchesLocation = selectedLocations.length === 0 ||
+            (internship.location && selectedLocations.includes(extractCountry(internship.location)));
+
+        return matchesSearch && matchesLocation;
+    });
 
     // Limit displayed internships based on authentication
     const displayedInternships = isAuthenticated
@@ -134,7 +226,7 @@ const Internships: React.FC = () => {
                     <h1 className="text-5xl font-mono font-bold mb-4">
                         <span className="gradient-text">Find Your Next</span>
                         <br />
-                        <span className="text-white">Internship</span>
+                        <span className="text-white">Opportunity</span>
                     </h1>
                     <p className="text-xl text-slate-400 max-w-2xl mx-auto">
                         Discover curated opportunities from top tech companies
@@ -174,25 +266,121 @@ const Internships: React.FC = () => {
                             />
                         </div>
 
-                        {/* Filter Dropdown */}
-                        <select
-                            value={selectedFilter}
-                            onChange={(e) => setSelectedFilter(e.target.value)}
-                            className="px-4 py-3 bg-void-900 border border-white/10 rounded-lg text-white focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500 transition-all"
-                        >
-                            <option value="all">All Locations</option>
-                            <option value="Remote">Remote</option>
-                            <option value="Hybrid">Hybrid</option>
-                            <option value="On-site">On-site</option>
-                        </select>
+                        <div className="relative location-dropdown-container">
+                            <div
+                                ref={locationButtonRef}
+                                onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+                                className="w-full px-4 py-3 bg-void-900 border border-white/10 rounded-lg text-white cursor-pointer hover:border-electric-500 transition-all flex items-center justify-between"
+                            >
+                                <span className={selectedLocations.length === 0 ? 'text-slate-500' : 'text-white'}>
+                                    {selectedLocations.length === 0
+                                        ? 'Select countries...'
+                                        : `${selectedLocations.length} countr${selectedLocations.length > 1 ? 'ies' : 'y'} selected`
+                                    }
+                                </span>
+                                <span className="text-slate-400">▼</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                {/* Location Dropdown - Rendered outside glass container */}
+                {isLocationDropdownOpen && (
+                    <div
+                        className="location-dropdown-menu fixed z-[9999] bg-[rgb(15,23,42)] border border-white/10 rounded-lg shadow-2xl max-h-80 overflow-hidden"
+                        style={{
+                            top: `${dropdownPosition.top + 8}px`,
+                            left: `${dropdownPosition.left}px`,
+                            width: `${dropdownPosition.width}px`
+                        }}
+                    >
+                        {/* Search Input */}
+                        <div className="p-3 border-b border-white/10 bg-[rgb(15,23,42)]">
+                            <input
+                                type="text"
+                                placeholder="Search countries..."
+                                value={locationSearchInput}
+                                onChange={(e) => setLocationSearchInput(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full px-3 py-2 bg-[rgb(30,41,59)] border border-white/10 rounded text-white placeholder-slate-500 focus:outline-none focus:border-electric-500 text-sm"
+                            />
+                        </div>
+
+                        {/* Selected Items */}
+                        {selectedLocations.length > 0 && (
+                            <div className="p-3 border-b border-white/10 bg-[rgb(30,41,59)]/50">
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedLocations.map(loc => (
+                                        <span
+                                            key={loc}
+                                            className="px-2 py-1 bg-electric-600/20 text-electric-400 rounded text-xs flex items-center gap-1"
+                                        >
+                                            {loc}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedLocations(prev => prev.filter(l => l !== loc));
+                                                }}
+                                                className="hover:text-electric-300"
+                                            >
+                                                ✕
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedLocations([]);
+                                        }}
+                                        className="px-2 py-1 text-slate-400 hover:text-white text-xs"
+                                    >
+                                        Clear all
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Location List */}
+                        <div className="max-h-60 overflow-y-auto bg-[rgb(15,23,42)]">
+                            {filteredLocations.length === 0 ? (
+                                <div className="p-4 text-center text-slate-500 text-sm">
+                                    No countries found
+                                </div>
+                            ) : (
+                                filteredLocations.map(location => (
+                                    <div
+                                        key={location}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedLocations(prev =>
+                                                prev.includes(location)
+                                                    ? prev.filter(l => l !== location)
+                                                    : [...prev, location]
+                                            );
+                                            // Clear search input after selection
+                                            setLocationSearchInput('');
+                                        }}
+                                        className="px-4 py-2 hover:bg-[rgb(30,41,59)] cursor-pointer flex items-center gap-3 text-sm transition-colors"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedLocations.includes(location)}
+                                            onChange={() => { }}
+                                            className="w-4 h-4 rounded border-white/10 bg-[rgb(30,41,59)] text-electric-500 focus:ring-electric-500"
+                                        />
+                                        <span className="text-white">{location}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Loading State */}
                 {isLoading && (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 border-4 border-electric-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-slate-400 font-mono">Loading internships...</p>
+                        <p className="text-slate-400 font-mono">Loading Opportunities...</p>
                     </div>
                 )}
 
@@ -275,25 +463,28 @@ const Internships: React.FC = () => {
 
                                             {/* Right: Apply Button */}
                                             <div className="flex flex-col gap-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleApply(internship.internshipID || internship.id || 0);
-                                                    }}
-                                                    className="px-6 py-3 bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 rounded-lg font-mono font-semibold text-white shadow-glow-sm hover:shadow-glow-md transition-all duration-300 whitespace-nowrap"
-                                                >
-                                                    {isAuthenticated ? 'Apply Now →' : 'Sign In to Apply'}
-                                                </button>
-                                                {internship.applyLink && isAuthenticated && (
+                                                {internship.applyLink && isAuthenticated ? (
                                                     <a
                                                         href={internship.applyLink}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         onClick={(e) => e.stopPropagation()}
-                                                        className="px-6 py-2 glass glass-hover rounded-lg font-mono text-slate-300 hover:text-white transition-all whitespace-nowrap text-center"
+                                                        className="px-6 py-3 bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 rounded-lg font-mono font-semibold text-white shadow-glow-sm hover:shadow-glow-md transition-all duration-300 whitespace-nowrap text-center"
                                                     >
-                                                        View Details
+                                                        Apply Now →
                                                     </a>
+                                                ) : (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (!isAuthenticated) {
+                                                                navigate('/login', { state: { from: { pathname: '/internships' } } });
+                                                            }
+                                                        }}
+                                                        className="px-6 py-3 bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 rounded-lg font-mono font-semibold text-white shadow-glow-sm hover:shadow-glow-md transition-all duration-300 whitespace-nowrap"
+                                                    >
+                                                        Sign In to Apply
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
