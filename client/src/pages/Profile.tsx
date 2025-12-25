@@ -143,7 +143,7 @@ const Profile: React.FC = () => {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-white/10">
+                    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-white/10">
                         <div className="text-center p-4 glass rounded-lg">
                             <div className="text-3xl font-mono font-bold gradient-text mb-1">
                                 {profileData?.projects?.length || 0}
@@ -160,7 +160,7 @@ const Profile: React.FC = () => {
                             <div className="text-3xl font-mono font-bold gradient-text mb-1">0</div>
                             <div className="text-sm text-slate-500">Applications</div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Account Details */}

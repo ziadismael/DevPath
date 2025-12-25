@@ -44,7 +44,7 @@ User.belongsToMany(User, {
     foreignKey: 'followerID',
     otherKey: 'followingID',
 });
-User.belongsTo(User, {
+User.belongsToMany(User, {
     as: "Followers",
     through: Follows,
     foreignKey: 'followingID',

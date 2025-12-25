@@ -24,9 +24,29 @@ const UserStatsWidget: React.FC<UserStatsWidgetProps> = ({ className = '' }) => 
     const [modalUsers, setModalUsers] = useState<User[]>([]);
 
     useEffect(() => {
-        if (isAuthenticated) {
+        if (!isAuthenticated) return;
+
+        // Initial fetch
+        fetchStats();
+
+        // Poll every 30 seconds for updates
+        const interval = setInterval(() => {
             fetchStats();
-        }
+        }, 30000);
+
+        // Refresh when tab becomes visible again
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                fetchStats();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Cleanup
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [isAuthenticated]);
 
     const fetchStats = async () => {
@@ -206,8 +226,8 @@ const UserStatsWidget: React.FC<UserStatsWidgetProps> = ({ className = '' }) => 
                                             <button
                                                 onClick={() => followingUsernames.has(searchUser.username) ? handleUnfollow(searchUser.username) : handleFollow(searchUser.username)}
                                                 className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all duration-300 ${followingUsernames.has(searchUser.username)
-                                                        ? 'bg-slate-700 hover:bg-slate-600 text-white'
-                                                        : 'bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 text-white'
+                                                    ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                                                    : 'bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 text-white'
                                                     }`}
                                             >
                                                 {followingUsernames.has(searchUser.username) ? 'Following' : 'Follow'}
@@ -230,6 +250,7 @@ const UserStatsWidget: React.FC<UserStatsWidgetProps> = ({ className = '' }) => 
                 currentUsername={user?.username}
                 onFollowChange={fetchStats}
                 onUserRemoved={handleUserRemoved}
+                initialFollowingUsernames={followingUsernames}
             />
         </>
     );
