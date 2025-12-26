@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { projectsAPI } from '../api/projects';
 import { Project } from '../types';
 import ProjectModal from '../components/ProjectModal';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 const Projects: React.FC = () => {
     const { isAuthenticated, user } = useAuth();
@@ -20,6 +21,9 @@ const Projects: React.FC = () => {
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -78,6 +82,33 @@ const Projects: React.FC = () => {
         }
         // Navigate to project details page
         navigate(`/projects/${project.projectID || project.id}`);
+    };
+
+    const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
+        e.stopPropagation();
+        setProjectToDelete(project);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!projectToDelete) return;
+
+        try {
+            setIsDeleting(true);
+            await projectsAPI.deleteProject(projectToDelete.projectID || projectToDelete.id?.toString() || '');
+
+            // Remove project from UI
+            setMyProjects(myProjects.filter(p => (p.projectID || p.id) !== (projectToDelete.projectID || projectToDelete.id)));
+            setCommunityProjects(communityProjects.filter(p => (p.projectID || p.id) !== (projectToDelete.projectID || projectToDelete.id)));
+
+            setDeleteModalOpen(false);
+            setProjectToDelete(null);
+        } catch (err: any) {
+            console.error('Error deleting project:', err);
+            alert(err.response?.data?.message || 'Failed to delete project');
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     // Mock projects for guest users
@@ -162,10 +193,22 @@ const Projects: React.FC = () => {
             )}
 
             {/* Author */}
-            <div className="pt-4 border-t border-white/10">
+            <div className="pt-4 border-t border-white/10 flex items-center justify-between">
                 <span className="text-xs text-slate-600">
                     by @{project.user?.username || 'anonymous'}
                 </span>
+                {/* Delete button - only show for project owner */}
+                {user && project.user?.username === user.username && (
+                    <button
+                        onClick={(e) => handleDeleteClick(e, project)}
+                        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
+                        title="Delete project"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -330,6 +373,19 @@ const Projects: React.FC = () => {
                     setIsModalOpen(false);
                 }}
                 mode="create"
+            />
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setProjectToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                itemType="project"
+                itemName={projectToDelete?.projectName}
+                isLoading={isDeleting}
             />
         </div>
     );

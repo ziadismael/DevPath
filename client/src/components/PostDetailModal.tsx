@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import CommentSection from './CommentSection';
 import ImageSlider from './ImageSlider';
 import ImageUpload from './ImageUpload';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 interface PostDetailModalProps {
     isOpen: boolean;
@@ -22,6 +23,8 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [editError, setEditError] = useState('');
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [editFormData, setEditFormData] = useState({
         title: post?.title || '',
         bodyText: post?.bodyText || '',
@@ -96,6 +99,23 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
         }
     };
 
+    const handleDelete = async () => {
+        if (!post?.postID && !post?.id) return;
+
+        try {
+            setIsDeleting(true);
+            await communityAPI.deletePost(post.postID || post.id?.toString() || '');
+            setDeleteModalOpen(false);
+            onClose(); // Close the modal
+            onPostUpdated(); // Refresh the posts list
+        } catch (err: any) {
+            console.error('Error deleting post:', err);
+            alert(err.response?.data?.message || 'Failed to delete post');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const isPostOwner = user && post && (user.userID === post.userID || user.username === post.User?.username);
 
     if (!isOpen || !post) return null;
@@ -127,12 +147,23 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
                         </div>
                         <div className="flex items-center gap-2">
                             {isPostOwner && (
-                                <button
-                                    onClick={handleEditToggle}
-                                    className="px-4 py-2 bg-electric-600/20 hover:bg-electric-600/30 text-electric-400 rounded-lg font-mono text-sm transition-colors"
-                                >
-                                    {isEditing ? 'Cancel' : 'Edit'}
-                                </button>
+                                <>
+                                    <button
+                                        onClick={handleEditToggle}
+                                        className="px-4 py-2 bg-electric-600/20 hover:bg-electric-600/30 text-electric-400 rounded-lg font-mono text-sm transition-colors"
+                                    >
+                                        {isEditing ? 'Cancel' : 'Edit'}
+                                    </button>
+                                    <button
+                                        onClick={() => setDeleteModalOpen(true)}
+                                        className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                        title="Delete post"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </>
                             )}
                             <button
                                 onClick={onClose}
@@ -237,6 +268,16 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                itemType="post"
+                itemName={post?.title}
+                isLoading={isDeleting}
+            />
         </div>
     );
 };

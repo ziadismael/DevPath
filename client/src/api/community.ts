@@ -53,6 +53,11 @@ export const communityAPI = {
         return response.data;
     },
 
+    // Delete post (requires authentication)
+    async deletePost(postID: string): Promise<void> {
+        await apiClient.delete(`/posts/${postID}`);
+    },
+
     // Delete comment (requires authentication)
     async deleteComment(postID: string, commentID: string): Promise<void> {
         await apiClient.delete(`/posts/${postID}/comments/${commentID}`);
