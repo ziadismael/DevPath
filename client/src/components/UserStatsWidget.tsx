@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { usersAPI } from '../api/users';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -208,13 +209,19 @@ const UserStatsWidget: React.FC<UserStatsWidgetProps> = ({ className = '' }) => 
                                         className="flex items-center justify-between p-3 glass rounded-lg hover:bg-white/5 transition-colors"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-xs font-bold text-white">
+                                            <Link
+                                                to={`/user/${searchUser.username}`}
+                                                className="w-8 h-8 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-xs font-bold text-white hover:scale-110 transition-transform"
+                                            >
                                                 {searchUser.username?.[0]?.toUpperCase() || 'U'}
-                                            </div>
+                                            </Link>
                                             <div>
-                                                <p className="text-sm font-mono font-semibold text-white">
+                                                <Link
+                                                    to={`/user/${searchUser.username}`}
+                                                    className="text-sm font-mono font-semibold text-white hover:text-electric-400 transition-colors"
+                                                >
                                                     @{searchUser.username}
-                                                </p>
+                                                </Link>
                                                 {searchUser.firstName && searchUser.lastName && (
                                                     <p className="text-xs text-slate-500">
                                                         {searchUser.firstName} {searchUser.lastName}

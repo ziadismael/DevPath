@@ -15,6 +15,8 @@ export default {
                 },
                 // Electric Purple (Primary)
                 electric: {
+                    300: '#c084fc',
+                    400: '#a855f7',
                     500: '#a855f7',
                     600: '#9333ea',
                     700: '#7e22ce',

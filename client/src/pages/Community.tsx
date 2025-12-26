@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { communityAPI } from '../api/community';
 import { Post } from '../types';
 import CreatePostModal from '../components/CreatePostModal';
@@ -236,13 +236,21 @@ const Community: React.FC = () => {
                             >
                                 {/* Post Header */}
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-lg font-bold text-white">
+                                    <Link
+                                        to={`/user/${post.User?.username || 'anonymous'}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-12 h-12 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-lg font-bold text-white hover:scale-110 transition-transform"
+                                    >
                                         {post.User?.username?.[0]?.toUpperCase() || 'U'}
-                                    </div>
+                                    </Link>
                                     <div>
-                                        <h4 className="font-mono font-semibold text-white">
+                                        <Link
+                                            to={`/user/${post.User?.username || 'anonymous'}`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="block font-mono font-semibold text-white hover:text-electric-400 transition-colors"
+                                        >
                                             @{post.User?.username || 'anonymous'}
-                                        </h4>
+                                        </Link>
                                         <p className="text-xs text-slate-500">
                                             {post.createdAt ? getTimeAgo(post.createdAt) : 'Recently'}
                                         </p>

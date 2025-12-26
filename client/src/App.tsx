@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import UserProfile from './pages/UserProfile';
 
 const App: React.FC = () => {
     return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/settings" element={<Settings />} />
                     </Routes>
                 </Layout>

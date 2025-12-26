@@ -4,26 +4,44 @@ import { Op } from 'sequelize';
 
 export const viewProfile = async (req, res, next) => {
     try {
-        const currentUser = req.userRecord;
+        let targetUser;
+
+        // If username is provided in params, fetch that user
+        if (req.params.username) {
+            targetUser = await models.User.findOne({
+                where: { username: req.params.username }
+            });
+
+            if (!targetUser) {
+                const error = new Error('User not found.');
+                error.status = 404;
+                throw error;
+            }
+        } else {
+            // Otherwise, return current user's profile
+            targetUser = req.userRecord;
+        }
 
         // Get followers and following with user details
-        const followers = await currentUser.getFollowers({
+        const followers = await targetUser.getFollowers({
             attributes: ['userID', 'username', 'firstName', 'lastName'],
             joinTableAttributes: []
         });
 
-        const following = await currentUser.getFollowing({
+        const following = await targetUser.getFollowing({
             attributes: ['userID', 'username', 'firstName', 'lastName'],
             joinTableAttributes: []
         });
 
         res.status(200).json({
-            userID: currentUser.userID,
-            username: currentUser.username,
-            firstName: currentUser.firstName,
-            lastName: currentUser.lastName,
-            email: currentUser.email,
-            role: currentUser.role,
+            userID: targetUser.userID,
+            username: targetUser.username,
+            firstName: targetUser.firstName,
+            lastName: targetUser.lastName,
+            email: targetUser.email,
+            role: targetUser.role,
+            university: targetUser.university,
+            country: targetUser.country,
             followers: followers || [],
             following: following || []
         });
@@ -41,18 +59,22 @@ export const updateProfile = async (req, res, next) => {
         }
 
         // Allowed fields to update
-        const { firstName, lastName, email, username, password } = req.body;
+        const { firstName, lastName, email, username, password, university, country } = req.body;
 
         // Update only if provided
         if (firstName) currentUser.firstName = firstName;
         if (lastName) currentUser.lastName = lastName;
-        if (email) await currentUser.setEmail(email);
-        if (username) await currentUser.setUsername(username);
+        // Only call setEmail if email is different from current email
+        if (email && email !== currentUser.getEmail()) await currentUser.setEmail(email);
+        // Only call setUsername if username is different from current username
+        if (username && username !== currentUser.getUsername()) await currentUser.setUsername(username);
+        if (university !== undefined) currentUser.university = university;
+        if (country !== undefined) currentUser.country = country;
         if (password) {
             const hashed = await bcrypt.hash(password, 10);
             currentUser.setPassword(hashed);
         }
-        currentUser.saveUpdates();
+        await currentUser.saveUpdates();
 
         return res.status(200).json({
             username: currentUser.getUsername(),
@@ -61,6 +83,8 @@ export const updateProfile = async (req, res, next) => {
             lastName: currentUser.lastName,
             userID: currentUser.userID,
             role: currentUser.role,
+            university: currentUser.university,
+            country: currentUser.country,
         })
     }
     catch (error) {

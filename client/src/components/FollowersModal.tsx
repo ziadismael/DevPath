@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { User } from '../types';
 import { usersAPI } from '../api/users';
 
@@ -110,13 +111,21 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
                                     className="flex items-center justify-between p-3 glass rounded-lg hover:bg-white/5 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-sm font-bold text-white">
+                                        <Link
+                                            to={`/user/${user.username}`}
+                                            onClick={onClose}
+                                            className="w-10 h-10 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-sm font-bold text-white hover:scale-110 transition-transform"
+                                        >
                                             {user.username?.[0]?.toUpperCase() || 'U'}
-                                        </div>
+                                        </Link>
                                         <div>
-                                            <p className="text-sm font-mono font-semibold text-white">
+                                            <Link
+                                                to={`/user/${user.username}`}
+                                                onClick={onClose}
+                                                className="text-sm font-mono font-semibold text-white hover:text-electric-400 transition-colors"
+                                            >
                                                 @{user.username}
-                                            </p>
+                                            </Link>
                                             {user.firstName && user.lastName && (
                                                 <p className="text-xs text-slate-500">
                                                     {user.firstName} {user.lastName}
