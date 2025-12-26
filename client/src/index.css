@@ -55,4 +55,13 @@
     -webkit-mask-composite: xor;
     mask-composite: exclude;
   }
+
+  /* Username link hover effect */
+  a[href^="/user/"] {
+    transition: color 0.3s ease !important;
+  }
+  
+  a[href^="/user/"]:hover {
+    color: #a855f7 !important;
+  }
 }
