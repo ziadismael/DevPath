@@ -15,12 +15,11 @@ const AIInterview: React.FC = () => {
         }
     }, [isAuthenticated]);
 
-    const handleStartInterview = () => {
+    const handleStartInterview = (type: string) => {
         if (!isAuthenticated) {
             navigate('/login', { state: { from: { pathname: '/interview' } } });
         } else {
-            // Start interview logic
-            alert('Starting interview...');
+            navigate(`/interview/room/${type}`);
         }
     };
 
@@ -61,7 +60,7 @@ const AIInterview: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                     {/* Technical Interview */}
                     <div
-                        onClick={handleStartInterview}
+                        onClick={() => handleStartInterview('technical')}
                         className="glass glass-hover rounded-xl p-8 cursor-pointer glow-electric"
                     >
                         <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-3xl mb-6 shadow-glow-md">
@@ -94,7 +93,7 @@ const AIInterview: React.FC = () => {
 
                     {/* Behavioral Interview */}
                     <div
-                        onClick={handleStartInterview}
+                        onClick={() => handleStartInterview('behavioral')}
                         className="glass glass-hover rounded-xl p-8 cursor-pointer glow-cyber"
                     >
                         <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-cyber-500 to-cyber-600 flex items-center justify-center text-3xl mb-6 shadow-glow-cyber-md">
@@ -162,7 +161,7 @@ const AIInterview: React.FC = () => {
                 {/* CTA */}
                 <div className="text-center">
                     <button
-                        onClick={handleStartInterview}
+                        onClick={() => handleStartInterview('technical')}
                         className="px-10 py-5 bg-gradient-to-r from-electric-600 to-cyber-500 hover:from-electric-500 hover:to-cyber-400 rounded-lg font-mono font-bold text-white shadow-glow-lg hover:shadow-glow-cyber-lg transition-all duration-300 text-lg"
                     >
                         {isAuthenticated ? 'Start New Interview' : 'Sign In to Get Started'}
