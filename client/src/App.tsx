@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Internships from './pages/Internships';
 import AIInterview from './pages/AIInterview';
+import VideoRoom from './pages/VideoRoom';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Community from './pages/Community';
@@ -23,6 +24,7 @@ const App: React.FC = () => {
                         <Route path="/" element={<Home />} />
                         <Route path="/opportunities" element={<Internships />} />
                         <Route path="/interview" element={<AIInterview />} />
+                        <Route path="/interview/room/:type" element={<VideoRoom />} />
                         <Route path="/projects" element={<Projects />} />
                         <Route path="/projects/:id" element={<ProjectDetails />} />
                         <Route path="/community" element={<Community />} />
