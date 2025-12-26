@@ -88,7 +88,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postID, comments, onCom
                                         @{comment.User?.username || comment.user?.username || 'anonymous'}
                                     </Link>
                                     {/* Delete button - only show for comment owner */}
-                                    {user && (user.username === comment.user?.username) && (
+                                    {user && (user.username === comment.User?.username || user.username === comment.user?.username) && (
                                         <button
                                             onClick={() => handleDeleteClick(comment)}
                                             disabled={isDeleting && commentToDelete?.commentID === comment.commentID}

@@ -136,13 +136,15 @@ export const updateProject = async (req, res, next) => {
 export const deleteProject = async (req, res, next) => {
     try {
         const { projectID } = req.params;
-        const project = await ProjectClass.findById(projectID);
+        const projectData = await ProjectClass.findById(projectID);
 
-        if (!project) {
+        if (!projectData) {
             const error = new Error("Project not found");
             error.status = 404;
             throw error;
         }
+
+        const project = new ProjectClass(projectData);
 
         // --- AUTHORIZATION CHECK ---
         const isAuthorized = await project.isTeamMember(req.user);

@@ -141,6 +141,11 @@ export interface Comment {
         firstName?: string;
         lastName?: string;
     };
+    User?: {
+        username: string;
+        firstName?: string;
+        lastName?: string;
+    };
 }
 
 export interface CreateCommentRequest {
