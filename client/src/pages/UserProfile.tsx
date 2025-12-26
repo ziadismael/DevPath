@@ -203,12 +203,12 @@ const UserProfile: React.FC = () => {
                                             <span className="text-syntax-pink">"username":</span>
                                             <span className="text-syntax-green">"@{profileUser.username}"</span>
                                         </div>
-                                        {profileUser.role && (
+                                        {/* {profileUser.role && (
                                             <div className="flex gap-2">
                                                 <span className="text-syntax-pink">"role":</span>
                                                 <span className="text-syntax-green">"{profileUser.role}"</span>
                                             </div>
-                                        )}
+                                        )} */}
                                         {profileUser.university && (
                                             <div className="flex gap-2">
                                                 <span className="text-syntax-pink">"university":</span>

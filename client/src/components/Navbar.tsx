@@ -72,9 +72,9 @@ const Navbar: React.FC = () => {
                                         <div className="px-4 py-2 border-b border-white/10">
                                             <p className="text-sm font-mono text-slate-400">Signed in as</p>
                                             <p className="text-sm font-semibold text-white truncate">{user?.username}</p>
-                                        </div>  
+                                        </div>
                                         <Link
-                                            to="/profile"
+                                            to={`/user/${user?.username}`}
                                             className="block px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
                                             onClick={() => setShowUserMenu(false)}
                                         >

@@ -1,9 +1,9 @@
-import {models} from "../models/index.models.js";
+import { models } from "../models/index.models.js";
 import ProjectClass from "../classes/Project.class.js"
 import PostClass from "./Post.class.js";
 
 export class UserClass {
-    constructor (userData) {
+    constructor(userData) {
         this._firstName = userData.firstName;
         this._lastName = userData.lastName;
         this._fullName = userData.fullName;
@@ -11,6 +11,8 @@ export class UserClass {
         this._username = userData.username;
         this._password = userData.password;
         this._userID = userData.userID;
+        this._university = userData.university || '';
+        this._country = userData.country || '';
         this._posts = [];
     }
 
@@ -41,7 +43,7 @@ export class UserClass {
     }
 
     async writePost(title, body, mediaURL) {
-        const currentPost = new PostClass(title, body ,this._userID);
+        const currentPost = new PostClass(title, body, this._userID);
         if (mediaURL) {
             currentPost.mediaURL = mediaURL;
         }
@@ -63,7 +65,7 @@ export class UserClass {
 
     // Encapsulation/ Abstraction Principles applied  for Getters/Setters
     async getPosts() {
-        const posts = await models.Post.findAll({where: {authorID: this._userID}});
+        const posts = await models.Post.findAll({ where: { authorID: this._userID } });
         posts.forEach(post => {
             this._posts.push(post);
         })
@@ -75,11 +77,11 @@ export class UserClass {
     }
 
     set firstName(value) {
-        if (typeof value !== "string"){
+        if (typeof value !== "string") {
             throw new Error("First name must be a string.");
         }
         value = value.trim();
-        if (!/^[A-Za-z]+$/.test(value)){
+        if (!/^[A-Za-z]+$/.test(value)) {
             throw new Error("First name must only contain letters.");
         }
         this._firstName = value;
@@ -90,43 +92,49 @@ export class UserClass {
     }
 
     set lastName(value) {
-        if (typeof value !== "string"){
+        if (typeof value !== "string") {
             throw new Error("First name must be a string.");
         }
         value = value.trim();
-        if (!/^[A-Za-z]+$/.test(value)){
+        if (!/^[A-Za-z]+$/.test(value)) {
             throw new Error("Last name must only contain letters.");
         }
         this._lastName = value;
     }
 
-    async setEmail (value) {
-        if (typeof value !== "string"){
+    async setEmail(value) {
+        if (typeof value !== "string") {
             throw new Error("Email must be a string.");
         }
         value = value.trim().toLowerCase();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)){
+        if (!emailRegex.test(value)) {
             throw new Error("Email must be a valid email format.");
         }
-        const existingUser = await models.User.findOne({ where: { email: value } });
-        if (existingUser){
+        // Check if email exists for a different user (not the current user)
+        const existingUser = await models.User.findOne({
+            where: {
+                email: value,
+                userID: { [models.Sequelize.Op.ne]: this._userID }
+            }
+        });
+        if (existingUser) {
             throw new Error("Email already exists");
         }
         this._email = value;
     }
 
-    getEmail () {
+    getEmail() {
         return this._email;
     }
 
     async setUsername(value) {
-        if (typeof value !== "string"){
+        if (typeof value !== "string") {
             throw new Error("username must be a string.");
         }
         value = value.trim();
         const existingUser = await models.User.findOne({ where: { username: value } });
-        if (existingUser){
+        if (existingUser) {
             throw new Error("username already exists");
         }
         this._username = value;
@@ -140,19 +148,35 @@ export class UserClass {
         return this._userID;
     }
 
-// Password Setter/ Getter
+    get university() {
+        return this._university;
+    }
+
+    set university(value) {
+        this._university = value || '';
+    }
+
+    get country() {
+        return this._country;
+    }
+
+    set country(value) {
+        this._country = value || '';
+    }
+
+    // Password Setter/ Getter
     getPassword() {
         return this._password;
     }
 
     setPassword(value) {
-        if (typeof value !== "string"){
+        if (typeof value !== "string") {
             throw new Error("Password must be a string.");
         }
         this._password = value;
     }
 
-    async saveUserDB () {
+    async saveUserDB() {
         try {
             const newUser = await models.User.create({
                 firstName: this.firstName,
@@ -170,9 +194,33 @@ export class UserClass {
         }
     }
 
-    async getUser(username){
-        const currentUser = await models.User.findOne({username: username});
-        if(!currentUser){
+    async saveUpdates() {
+        try {
+            const userRecord = await models.User.findByPk(this._userID);
+            if (!userRecord) {
+                throw new Error("User not found");
+            }
+
+            await userRecord.update({
+                firstName: this._firstName,
+                lastName: this._lastName,
+                email: this._email,
+                username: this._username,
+                password: this._password,
+                university: this._university,
+                country: this._country
+            });
+
+            console.log("User updated successfully.");
+        } catch (error) {
+            console.error("Error updating user:", error);
+            throw error;
+        }
+    }
+
+    async getUser(username) {
+        const currentUser = await models.User.findOne({ username: username });
+        if (!currentUser) {
             throw new Error("User not found");
         }
         return currentUser;
@@ -224,7 +272,7 @@ export class RegularUserClass extends UserClass {
         return following.map(u => u.userID);
     }
 
-    async getProjects () {
+    async getProjects() {
         const projects = await models.Project.findAll({
             include: {
                 model: models.Team,
@@ -291,9 +339,9 @@ export class RegularUserClass extends UserClass {
 
     }
 
-    async applyToInternship (internshipID) {
+    async applyToInternship(internshipID) {
         const internship = await models.Internship.findByPk(internshipID);
-        if (internship){
+        if (internship) {
             await models.Application.create({
                 status: 'Applied',
                 internshipID,
@@ -301,7 +349,7 @@ export class RegularUserClass extends UserClass {
             });
         }
     }
-    get role(){
+    get role() {
         return this._role;
     }
 }
@@ -316,14 +364,14 @@ export class AdminClass extends UserClass {
 
     async banUser(userID) {
         const bannedUser = await models.User.findByPk(userID);
-        if (bannedUser){
+        if (bannedUser) {
             await bannedUser.destroy();
             console.log(`User ${userID} banned,`);
         }
         console.log("No user with the userID: ", userID);
     }
 
-    get role(){
+    get role() {
         return this._role;
     }
 }

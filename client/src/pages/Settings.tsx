@@ -2,30 +2,57 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import { usersAPI } from '../api/users';
 
 const Settings: React.FC = () => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('account');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(false);
     const [message, setMessage] = useState('');
 
     // Form states
     const [formData, setFormData] = useState({
-        firstName: user?.firstName || '',
-        lastName: user?.lastName || '',
-        email: user?.email || '',
-        username: user?.username || '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        username: '',
+        university: '',
+        country: '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
     useEffect(() => {
+        // Wait for auth to finish loading before checking authentication
+        if (isLoading) return;
+
         if (!isAuthenticated) {
             navigate('/login');
+            return;
         }
-    }, [isAuthenticated]);
+        fetchProfileData();
+    }, [isAuthenticated, isLoading, navigate]);
+
+    const fetchProfileData = async () => {
+        try {
+            const profileData = await usersAPI.getProfile();
+            setFormData({
+                firstName: profileData.firstName || '',
+                lastName: profileData.lastName || '',
+                email: profileData.email || '',
+                username: profileData.username || '',
+                university: profileData.university || '',
+                country: profileData.country || '',
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+        } catch (err) {
+            console.error('Error fetching profile:', err);
+        }
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -37,25 +64,31 @@ const Settings: React.FC = () => {
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            setIsLoading(true);
+            setIsLoadingData(true);
             setMessage('');
 
-            const updateData: any = {};
-            if (formData.firstName !== user?.firstName) updateData.firstName = formData.firstName;
-            if (formData.lastName !== user?.lastName) updateData.lastName = formData.lastName;
-            if (formData.email !== user?.email) updateData.email = formData.email;
+            const updateData: any = {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                university: formData.university,
+                country: formData.country
+            };
 
-            await apiClient.put(`/users/${user?.username}`, updateData);
+            await usersAPI.updateProfile(user?.username || '', updateData);
             setMessage('Profile updated successfully!');
 
-            // Refresh page after 1 second
+            // Refresh profile data
+            await fetchProfileData();
+
+            // Clear success message after 3 seconds
             setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+                setMessage('');
+            }, 3000);
         } catch (err: any) {
             setMessage(err.response?.data?.message || 'Failed to update profile');
         } finally {
-            setIsLoading(false);
+            setIsLoadingData(false);
         }
     };
 
@@ -68,7 +101,7 @@ const Settings: React.FC = () => {
         }
 
         try {
-            setIsLoading(true);
+            setIsLoadingData(true);
             setMessage('');
 
             await apiClient.put(`/users/${user?.username}`, {
@@ -85,7 +118,7 @@ const Settings: React.FC = () => {
         } catch (err: any) {
             setMessage(err.response?.data?.message || 'Failed to update password');
         } finally {
-            setIsLoading(false);
+            setIsLoadingData(false);
         }
     };
 
@@ -119,8 +152,8 @@ const Settings: React.FC = () => {
                                 <button
                                     onClick={() => setActiveTab('account')}
                                     className={`w-full text-left px-4 py-3 rounded-lg font-mono transition-all ${activeTab === 'account'
-                                            ? 'bg-electric-600/20 text-electric-400 border border-electric-500/30'
-                                            : 'text-slate-400 hover:bg-white/5'
+                                        ? 'bg-electric-600/20 text-electric-400 border border-electric-500/30'
+                                        : 'text-slate-400 hover:bg-white/5'
                                         }`}
                                 >
                                     Account
@@ -128,8 +161,8 @@ const Settings: React.FC = () => {
                                 <button
                                     onClick={() => setActiveTab('security')}
                                     className={`w-full text-left px-4 py-3 rounded-lg font-mono transition-all ${activeTab === 'security'
-                                            ? 'bg-electric-600/20 text-electric-400 border border-electric-500/30'
-                                            : 'text-slate-400 hover:bg-white/5'
+                                        ? 'bg-electric-600/20 text-electric-400 border border-electric-500/30'
+                                        : 'text-slate-400 hover:bg-white/5'
                                         }`}
                                 >
                                     Security
@@ -190,12 +223,37 @@ const Settings: React.FC = () => {
                                             />
                                         </div>
 
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-mono text-slate-400 mb-2">University</label>
+                                                <input
+                                                    type="text"
+                                                    name="university"
+                                                    value={formData.university}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Your university"
+                                                    className="w-full px-4 py-3 bg-void-900 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500 transition-all"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-mono text-slate-400 mb-2">Country</label>
+                                                <input
+                                                    type="text"
+                                                    name="country"
+                                                    value={formData.country}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Your country"
+                                                    className="w-full px-4 py-3 bg-void-900 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500 transition-all"
+                                                />
+                                            </div>
+                                        </div>
+
                                         <button
                                             type="submit"
-                                            disabled={isLoading}
+                                            disabled={isLoadingData}
                                             className="px-6 py-3 bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 rounded-lg font-mono font-semibold text-white shadow-glow-md hover:shadow-glow-lg transition-all duration-300 disabled:opacity-50"
                                         >
-                                            {isLoading ? 'Saving...' : 'Save Changes'}
+                                            {isLoadingData ? 'Saving...' : 'Save Changes'}
                                         </button>
                                     </div>
                                 </form>
@@ -226,10 +284,10 @@ const Settings: React.FC = () => {
                                             />
                                             <button
                                                 type="submit"
-                                                disabled={isLoading}
+                                                disabled={isLoadingData}
                                                 className="px-6 py-3 bg-gradient-to-r from-electric-600 to-electric-700 hover:from-electric-500 hover:to-electric-600 rounded-lg font-mono font-semibold text-white shadow-glow-md hover:shadow-glow-lg transition-all duration-300 disabled:opacity-50"
                                             >
-                                                {isLoading ? 'Updating...' : 'Update Password'}
+                                                {isLoadingData ? 'Updating...' : 'Update Password'}
                                             </button>
                                         </div>
                                     </div>
