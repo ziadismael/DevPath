@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { communityAPI } from '../api/community';
 import { Comment } from '../types';
+import { useAuth } from '../context/AuthContext';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 interface CommentSectionProps {
     postID: string;
@@ -10,9 +12,13 @@ interface CommentSectionProps {
 }
 
 const CommentSection: React.FC<CommentSectionProps> = ({ postID, comments, onCommentAdded }) => {
+    const { user } = useAuth();
     const [commentText, setCommentText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,6 +35,31 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postID, comments, onCom
             setError(err.response?.data?.message || err.message || 'Failed to add comment');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteClick = (comment: Comment) => {
+        setCommentToDelete(comment);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!commentToDelete) return;
+
+        const commentID = commentToDelete.commentID || commentToDelete.id;
+        if (!commentID) return;
+
+        try {
+            setIsDeleting(true);
+            await communityAPI.deleteComment(postID, commentID.toString());
+            setDeleteModalOpen(false);
+            setCommentToDelete(null);
+            onCommentAdded(); // Refresh comments
+        } catch (err: any) {
+            console.error('Error deleting comment:', err);
+            alert(err.response?.data?.message || 'Failed to delete comment');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -56,6 +87,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postID, comments, onCom
                                     >
                                         @{comment.User?.username || comment.user?.username || 'anonymous'}
                                     </Link>
+                                    {/* Delete button - only show for comment owner */}
+                                    {user && (user.username === comment.user?.username) && (
+                                        <button
+                                            onClick={() => handleDeleteClick(comment)}
+                                            disabled={isDeleting && commentToDelete?.commentID === comment.commentID}
+                                            className="ml-auto p-1 text-slate-500 hover:text-red-400 transition-colors disabled:opacity-50"
+                                            title="Delete comment"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    )}
                                 </div>
                                 <p className="text-sm text-slate-300">{comment.text}</p>
                             </div>
@@ -82,9 +126,20 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postID, comments, onCom
                 </button>
             </form>
 
-            {error && (
-                <p className="mt-2 text-xs text-red-400">{error}</p>
-            )}
+            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setCommentToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                itemType="comment"
+                itemName={commentToDelete?.text?.substring(0, 50)}
+                isLoading={isDeleting}
+            />
         </div>
     );
 };

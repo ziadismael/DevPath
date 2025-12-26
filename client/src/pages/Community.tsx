@@ -7,9 +7,10 @@ import CreatePostModal from '../components/CreatePostModal';
 import PostDetailModal from '../components/PostDetailModal';
 import UserStatsWidget from '../components/UserStatsWidget';
 import ImageSlider from '../components/ImageSlider';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 const Community: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const navigate = useNavigate();
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -17,6 +18,9 @@ const Community: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         fetchPosts();
@@ -126,6 +130,37 @@ const Community: React.FC = () => {
             if (updatedPost) {
                 setSelectedPost(updatedPost);
             }
+        }
+    };
+
+    const handleDeleteClick = (e: React.MouseEvent, post: Post) => {
+        e.stopPropagation();
+        setPostToDelete(post);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!postToDelete) return;
+
+        try {
+            setIsDeleting(true);
+            await communityAPI.deletePost(postToDelete.postID || postToDelete.id);
+
+            // Remove post from UI
+            setPosts(posts.filter(p => (p.postID || p.id) !== (postToDelete.postID || postToDelete.id)));
+
+            // Close modal and detail view if open
+            setDeleteModalOpen(false);
+            setPostToDelete(null);
+            if (selectedPost && (selectedPost.postID || selectedPost.id) === (postToDelete.postID || postToDelete.id)) {
+                setIsPostDetailOpen(false);
+                setSelectedPost(null);
+            }
+        } catch (err: any) {
+            console.error('Error deleting post:', err);
+            alert(err.response?.data?.message || 'Failed to delete post');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -243,7 +278,7 @@ const Community: React.FC = () => {
                                     >
                                         {post.User?.username?.[0]?.toUpperCase() || 'U'}
                                     </Link>
-                                    <div>
+                                    <div className="flex-1">
                                         <Link
                                             to={`/user/${post.User?.username || 'anonymous'}`}
                                             onClick={(e) => e.stopPropagation()}
@@ -255,6 +290,18 @@ const Community: React.FC = () => {
                                             {post.createdAt ? getTimeAgo(post.createdAt) : 'Recently'}
                                         </p>
                                     </div>
+                                    {/* Delete Button - Only show for post owner */}
+                                    {user && post.User?.username === user.username && (
+                                        <button
+                                            onClick={(e) => handleDeleteClick(e, post)}
+                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                            title="Delete post"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Post Content */}
@@ -308,6 +355,19 @@ const Community: React.FC = () => {
                 }}
                 post={selectedPost}
                 onPostUpdated={handlePostUpdated}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setPostToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                itemType="post"
+                itemName={postToDelete?.title}
+                isLoading={isDeleting}
             />
         </div>
     );
