@@ -202,13 +202,19 @@ const ProjectDetails: React.FC = () => {
                                     key={member.userID || member.username}
                                     className="flex items-center gap-3 p-3 glass rounded-lg"
                                 >
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-sm font-bold text-white">
+                                    <Link
+                                        to={`/user/${member.username}`}
+                                        className="w-10 h-10 rounded-full bg-gradient-to-br from-electric-600 to-electric-700 flex items-center justify-center text-sm font-bold text-white hover:scale-110 transition-transform"
+                                    >
                                         {member.username?.[0]?.toUpperCase() || 'U'}
-                                    </div>
+                                    </Link>
                                     <div>
-                                        <p className="font-mono font-semibold text-white">
+                                        <Link
+                                            to={`/user/${member.username}`}
+                                            className="font-mono font-semibold text-white hover:text-electric-400 transition-colors"
+                                        >
                                             @{member.username}
-                                        </p>
+                                        </Link>
                                         {member.TeamMember?.role && (
                                             <p className="text-xs text-slate-500">
                                                 {member.TeamMember.role}
@@ -229,7 +235,7 @@ const ProjectDetails: React.FC = () => {
                         <ImageSlider images={project.screenshots} autoHeight={true} />
                     </div>
                 )}
-                
+
             </div>
 
             {/* Edit Project Modal */}

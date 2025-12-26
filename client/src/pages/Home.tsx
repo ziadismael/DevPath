@@ -139,8 +139,8 @@ const Home: React.FC = () => {
                             <div className="space-y-2">
                                 <div className="flex">
                                     <span className="text-syntax-green">$</span>
-                                    <span className="ml-2 text-slate-300">echo "Welcome back, </span>
-                                    <span className="text-electric-400">@{user?.username}</span>
+                                    <span className="ml-2 text-slate-300">echo "Welcome back, ‎</span>
+                                    <span className="text-electric-400"> @{user?.username}</span>
                                     <span className="text-slate-300">"</span>
                                 </div>
                                 <div className="text-syntax-blue ml-4">
