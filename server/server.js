@@ -10,6 +10,7 @@ import projectRouter from "./routes/project.routes.js";
 import userRouter from "./routes/user.routes.js";
 import teamRouter from "./routes/team.routes.js";
 import postRouter from "./routes/mediaPost.routes.js";
+import livekitRouter from "./routes/livekit.routes.js";
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/projects", projectRouter);
 app.use("/api/users", userRouter);
 app.use("/api/teams", teamRouter);
 app.use("/api/posts", postRouter);
+app.use("/api/livekit", livekitRouter);
 
 
 app.get("/", (req, res) => {

@@ -16,6 +16,7 @@
     "express": "~4.16.1",
     "jsonwebtoken": "^9.0.2",
     "linkedin-jobs-api": "^1.0.7",
+    "livekit-server-sdk": "^2.15.0",
     "morgan": "~1.9.1",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
