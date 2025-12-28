@@ -14,6 +14,9 @@ dependencies = [
     "python-dotenv",
     "huggingface_hub",
     "livekit-plugins-openai",
+    "livekit-plugins-deepgram>=1.3.10",
+    "livekit-plugins-silero>=1.3.10",
+    "livekit-plugins-google>=1.3.6",
 ]
 
 [dependency-groups]

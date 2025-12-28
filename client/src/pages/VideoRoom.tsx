@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Editor from '@monaco-editor/react';
@@ -12,6 +12,7 @@ import {
 } from '@livekit/components-react';
 import { Track, ConnectionState } from 'livekit-client';
 import '@livekit/components-styles';
+import LimitReachedModal from '../components/LimitReachedModal';
 
 const LANGUAGES = [
     { id: 'javascript', name: 'JavaScript', defaultCode: '// Start coding here...\n\nfunction solution() {\n  console.log("Hello World!");\n}' },
@@ -45,14 +46,25 @@ const VideoRoom: React.FC = () => {
         }
     }, [isAuthenticated, navigate]);
 
+    const [showLimitModal, setShowLimitModal] = useState(false);
+    const fetchedRef = React.useRef(false);
+
     // Fetch Token
     useEffect(() => {
-        if (!user?.username) return;
+        if (!user?.username || fetchedRef.current) return;
+
+        fetchedRef.current = true; // Mark as fetched immediately
 
         const getToken = async () => {
             try {
                 const participantName = user.username;
                 const response = await fetch(`http://localhost:5001/api/livekit/token?roomName=${roomName}&participantName=${participantName}`);
+
+                if (response.status === 403) {
+                    setShowLimitModal(true);
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (data.token) {
@@ -61,9 +73,11 @@ const VideoRoom: React.FC = () => {
                     setConnect(true);
                 } else {
                     console.error("Failed to fetch token:", data);
+                    fetchedRef.current = false; // Reset on failure to allow retry if needed (though typically this error is fatal)
                 }
             } catch (error) {
                 console.error("Error fetching token:", error);
+                fetchedRef.current = false; // Reset on network error to allow retry
             }
         };
 
@@ -84,6 +98,16 @@ const VideoRoom: React.FC = () => {
             setCode(lang.defaultCode);
         }
     };
+
+    // Show Modal if Limit Reached
+    if (showLimitModal) {
+        return (
+            <div className="min-h-screen bg-void-950 flex items-center justify-center text-white">
+                <div className="animate-pulse">Checking Permissions...</div>
+                <LimitReachedModal isOpen={true} onClose={() => navigate('/interview')} />
+            </div>
+        );
+    }
 
     if (!token || !serverUrl) {
         return <div className="min-h-screen bg-void-950 flex items-center justify-center text-white">Connecting to Interview Room...</div>;

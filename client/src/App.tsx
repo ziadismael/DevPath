@@ -14,6 +14,7 @@ import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import UserProfile from './pages/UserProfile';
+import Pricing from './pages/Pricing';
 
 const App: React.FC = () => {
     return (
@@ -33,6 +34,7 @@ const App: React.FC = () => {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/settings" element={<Settings />} />
+                        <Route path="/pricing" element={<Pricing />} />
                     </Routes>
                 </Layout>
             </Router>
